@@ -6,6 +6,7 @@ COPY            = 'Copy'
 LOCAL_FILE      = 'LocalFile'
 REMOTE_FILE     = 'RemoteFile'
 
+NEW             = "New"
 PENDING         = "Pending"
 TRANSFER_INPUT  = "TransferInput"
 RUNNING         = "Running"
@@ -24,12 +25,17 @@ class Task(object):
         """
         self._uid = uuid.uuid4()
 
-        self._cb = []
+        self._cbs = []
+        self._log = []
+        self._state = NEW
+
         self._name = name
         self._executable = executable
         self._arguments = arguments
         self._input = input
         self._output = output
+
+        self._dir_name = "%s__%s" % (self.name, self.uid)
 
     # ------------------------------------------------------------------------
     #
@@ -49,13 +55,35 @@ class Task(object):
         if not isinstance(callbacks, list):
             callbacks = [callbacks] 
 
-        self._cb.extend(callbacks)
+        self._cbs.extend(callbacks)
+
+    # ------------------------------------------------------------------------
+    #
+    def __str__(self):
+        """String representation. Returns the task name.
+        """
+        return self.name
 
     # ------------------------------------------------------------------------
     #
     @property
     def uid(self):
         return self._uid
+
+    # ------------------------------------------------------------------------
+    #
+    @property
+    def log(self):
+        """Returns the full log.
+        """
+        return self._log
+
+    # ------------------------------------------------------------------------
+    #
+    @property
+    def dir_name(self):
+        return self._dir_name
+
 
     # ------------------------------------------------------------------------
     #
@@ -81,4 +109,16 @@ class Task(object):
         """
         return self._arguments
     
+    # ------------------------------------------------------------------------
+    #
+    def _set_and_propagate_state_change_priv(self, new_state):
+        """Propagate a state change to all callback functions.
+        """
+        # do nothing if existing and new state are identical
+        if self._state == new_state:
+            return
+
+        for callback in self._cbs:
+            callback(self, self._state, new_state)
+        self._state = new_state
 
