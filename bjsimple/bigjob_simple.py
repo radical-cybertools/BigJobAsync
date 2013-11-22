@@ -174,7 +174,7 @@ class BigJobSimple(object):
         task._set_and_propagate_state_change_priv(new_state=TRANSFER_INPUT)
 
         for directive in task._input:
-            if directive['type'] == LOCAL_FILE:
+            if directive['where'] == LOCAL:
                 try: 
                     # we use saga-python to copy a local file to the 
                     # remote destination
@@ -187,7 +187,7 @@ class BigJobSimple(object):
                     task._set_and_propagate_state_change_priv(new_state=FAILED)
                     return
 
-            elif directive['type'] == REMOTE_FILE:
+            elif directive['where'] == REMOTE:
                 try: 
                     # copy around stuff locally on the remote machine
                     task._log.append("Copying REMOTE input file '%s'" % directive['origin'])

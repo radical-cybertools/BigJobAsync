@@ -3,8 +3,8 @@ import uuid
 # ----------------------------------------------------------------------------
 # CONSTANTS
 COPY            = 'Copy'
-LOCAL_FILE      = 'LocalFile'
-REMOTE_FILE     = 'RemoteFile'
+LOCAL           = 'LocalFile'
+REMOTE          = 'RemoteFile'
 
 NEW             = "New"
 PENDING         = "Pending"

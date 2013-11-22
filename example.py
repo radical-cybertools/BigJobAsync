@@ -64,11 +64,11 @@ if __name__ == "__main__":
             ], 
             input=[
                 {
-                    "type"   : bjsimple.LOCAL_FILE,  "mode": bjsimple.COPY, 
+                    "where"  : bjsimple.LOCAL,  "mode": bjsimple.COPY, 
                     "origin" : "/Users/oweidner/Work/Data/loreipsum_pt1.txt"
                 },
                 {
-                    "type"   : bjsimple.REMOTE_FILE, "mode": bjsimple.COPY, 
+                    "where"  : bjsimple.REMOTE, "mode": bjsimple.COPY, 
                     "origin" : "/home1/00988/tg802352/loreipsum_pt2.txt"
                 }
             ], 
