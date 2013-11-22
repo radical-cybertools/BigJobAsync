@@ -56,18 +56,24 @@ if __name__ == "__main__":
     # define 128 tasks, and their 
     my_tasks = []
 
-    for i in range(0, 128):
+    for i in range(0, 2):
         task = bjsimple.Task(
             name="my-task-%s".format(i),
             executable="/bin/bash",
             arguments=["-c", "\"cat loreipsum_pt1.txt loreipsum_pt2.txt >> loreipsum.txt\""], 
             input=[
-                {"type" : bjsimple.LOCAL_FILE,  "mode": bjsimple.COPY, 
-                 "origin" : "/Users/oweidner/Work/Data/test/loreipsum_pt1.txt"},
-                {"type" : bjsimple.REMOTE_FILE, "mode": bjsimple.COPY, 
-                 "origin" : "/home1/00988/tg802352/loreipsum_pt2.txt"}], 
+                {
+                    "type" : bjsimple.LOCAL_FILE,  "mode": bjsimple.COPY, 
+                    "origin" : "/Users/oweidner/Work/Data/test/loreipsum_pt1.txt"
+                },
+                {
+                    "type" : bjsimple.REMOTE_FILE, "mode": bjsimple.COPY, 
+                    "origin" : "/home1/00988/tg802352/loreipsum_pt2.txt"
+                }], 
             output=[
-                {"origin" : "loreipsum.txt", "destination" : "."}
+                {
+                    "origin" : "loreipsum.txt", "destination" : "."
+                }
             ]
         )
         task.register_callbacks(task_cb)

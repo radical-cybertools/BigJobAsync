@@ -81,18 +81,4 @@ class Task(object):
         """
         return self._arguments
     
-    # ------------------------------------------------------------------------
-    #
-    @property
-    def input_transfers(self):
-        """Returns the list of input files transfers.
-        """
-        return self._name
 
-    # ------------------------------------------------------------------------
-    #
-    @property
-    def output_transfers(self):
-        """Returns the list output files to transfer.
-        """
-        return self._name

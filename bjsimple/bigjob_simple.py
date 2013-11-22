@@ -117,6 +117,21 @@ class BigJobSimple(object):
 
     # ------------------------------------------------------------------------
     #
+    def _do_file_transfer_in(self, directives):
+        """Takes care of file staging.
+
+        Directives look like this::
+
+            {
+                "type" : bjsimple.LOCAL_FILE,  "mode": bjsimple.COPY, 
+                "origin" : "/Users/oweidner/Work/Data/test/loreipsum_pt1.txt"
+            }
+
+        """
+
+
+    # ------------------------------------------------------------------------
+    #
     def _launch_pj_priv(self):
         """Create the base working directory and launches a BigJob.
         """
@@ -156,7 +171,8 @@ class BigJobSimple(object):
                 new_state=FAILED
             )
 
-
+    # ------------------------------------------------------------------------
+    #
     def _set_and_propagate_state_change_priv(self, old_state, new_state):
         """Propagate a state change to all callback functions.
         """
