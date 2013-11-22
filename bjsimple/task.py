@@ -1,13 +1,25 @@
 import uuid
 
 # ----------------------------------------------------------------------------
+# CONSTANTS
+COPY            = 'Copy'
+LOCAL_FILE      = 'LocalFile'
+REMOTE_FILE     = 'RemoteFile'
+
+PENDING         = "Pending"
+TRANSFER_INPUT  = "TransferInput"
+RUNNING         = "Running"
+TRANSFER_OUTPUT = "TransferOutput"
+FAILED          = "Failed"
+DONE            = "Done"
+
+# ----------------------------------------------------------------------------
 #
 class Task(object):
 
     # ------------------------------------------------------------------------
     #
-    def __init__(self, name, executable, arguments, 
-        transfer_input=[], transfer_output=[]):
+    def __init__(self, name, executable, arguments, input=[], output=[]):
         """Constructs a new Task object.
         """
         self._uid = uuid.uuid4()
@@ -16,8 +28,8 @@ class Task(object):
         self._name = name
         self._executable = executable
         self._arguments = arguments
-        self._transfer_input = transfer_input
-        self._transfer_output = transfer_output
+        self._input = input
+        self._output = output
 
     # ------------------------------------------------------------------------
     #

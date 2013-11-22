@@ -25,7 +25,7 @@ def resource_cb(origin, old_state, new_state):
 
     elif new_state == bjsimple.DONE:
         # Exit if bigjob is done running 
-        sys.stderr.write("   ... EXITING.\n")
+        sys.stderr.write("   * EXITING.\n")
         sys.exit(0)
 
 # ----------------------------------------------------------------------------
@@ -33,7 +33,7 @@ def resource_cb(origin, old_state, new_state):
 def task_cb(origin, old_state, new_state):
     """CALLBACK FUNCTION: Writes Task state changes to STDERR
     """
-    msg = " * Task %s has changed from '%s' to '%s'.\n".format(
+    msg = " * Task %s state changed from '%s' to '%s'.\n".format(
         origin, old_state, new_state)
     sys.stderr.write(msg)
 
@@ -47,21 +47,29 @@ if __name__ == "__main__":
         runtime=5, # minutes
         cores=64,
         project_id="TG-MCB090174",
-        base_dir="/home1/00988/tg802352/")
+        base_dir="/scratch/00988/tg802352/"
+    )
 
     stampede.register_callbacks(resource_cb)
     stampede.allocate()
 
-    # define the tasks and their data 
+    # define 128 tasks, and their 
     my_tasks = []
 
     for i in range(0, 128):
         task = bjsimple.Task(
             name="my-task-%s".format(i),
-            executable="/bin/cat",
-            arguments=["SDSD"], 
-            transfer_input=[], 
-            transfer_output=[])
+            executable="/bin/bash",
+            arguments=["-c", "\"cat loreipsum_pt1.txt loreipsum_pt2.txt >> loreipsum.txt\""], 
+            input=[
+                {"type" : bjsimple.LOCAL_FILE,  "mode": bjsimple.COPY, 
+                 "origin" : "/Users/oweidner/Work/Data/test/loreipsum_pt1.txt"},
+                {"type" : bjsimple.REMOTE_FILE, "mode": bjsimple.COPY, 
+                 "origin" : "/home1/00988/tg802352/loreipsum_pt2.txt"}], 
+            output=[
+                {"origin" : "loreipsum.txt", "destination" : "."}
+            ]
+        )
         task.register_callbacks(task_cb)
         my_tasks.append(task)
 
