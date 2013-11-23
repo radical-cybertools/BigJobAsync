@@ -11,9 +11,17 @@ RESOURCES = {
     'XSEDE.STAMPEDE': {
         'redis_host'    : 'gw68.quarry.iu.teragrid.org:6379',
         'redis_pwd'     : 'ILikeBigJob_wITH-REdIS',
-        'jobmgr_url'    : 'slurm+ssh://login1.stampede.tacc.utexas.edu',
+        'jobmgr_url'    : 'slurm+ssh://login4.stampede.tacc.utexas.edu',
         'jobmgr_queue'  : 'normal',
-        'shared_fs_url' : 'sftp://login1.stampede.tacc.utexas.edu/',
+        'shared_fs_url' : 'sftp://login4.stampede.tacc.utexas.edu/',
+    },
+
+    'FUTUREGRID.ALAMO': {
+        'redis_host'    : 'gw68.quarry.iu.teragrid.org:6379',
+        'redis_pwd'     : 'ILikeBigJob_wITH-REdIS',
+        'jobmgr_url'    : 'pbs+ssh://alamo.futuregrid.org',
+        'jobmgr_queue'  : 'short',
+        'shared_fs_url' : 'sftp://alamo.futuregrid.org/',
     }
 }
 
@@ -31,8 +39,8 @@ RUNNING = "Running"
 FAILED  = "Failed"
 DONE    = "Done"
 
-# ----
-#
+# ----------------------------------------------------------------------------
+# 
 def _compute_unit_launcher_worker(remote_work_dir_url, task):
     # we use a single directory instance that we pass around for 
     # performance reasons as it keeps the connection open. 
@@ -47,7 +55,7 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
     except Exception, ex:
         task._log.append(str(ex))
         task._set_and_propagate_state_change_priv(new_state=FAILED)
-        return
+        return -1
 
     # Next we can take care of the file transfers
     # Change the state to 'TransferInput'
@@ -65,7 +73,7 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
             except Exception, ex:
                 task._log.append(str(ex))
                 task._set_and_propagate_state_change_priv(new_state=FAILED)
-                return
+                return -1
 
         elif directive['where'] == REMOTE:
             try: 
@@ -76,12 +84,28 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
             except Exception, ex:
                 task._log.append(str(ex))
                 task._set_and_propagate_state_change_priv(new_state=FAILED)
-                return
+                return -1
+
+    # Now that the file transfers have completed, we can create a 
+    # work unit and submit it to the BigJob
+    try:
+        cu_description = pilot.ComputeUnitDescription()
+        cu_description.executable        = task.executable
+        cu_description.arguments         = task.arguments
+        cu_description.working_directory = task.dir_name
+
+        #pilot_job.submit_compute_unit(cu_description)
+    except Exception, ex:
+        task._log.append(str(ex))
+        task._set_and_propagate_state_change_priv(new_state=FAILED)
+        return -1
 
     # Set state to 'Pending'. From here on, BigJob will
     # determine the state of this task.
     task._set_and_propagate_state_change_priv(new_state=PENDING)
 
+    # return the compute unit description
+    return task
 
 # ----------------------------------------------------------------------------
 #
@@ -91,7 +115,7 @@ class BigJobSimple(object):
 
     # ------------------------------------------------------------------------
     #
-    def __init__(self, resource, runtime, cores, project_id, workdir, queue=DEFAULT):
+    def __init__(self, resource, runtime, cores, workdir, project_id=None, queue=DEFAULT):
         """Creates a new BigJob instance.
         """
         self._cbs = []
@@ -192,8 +216,34 @@ class BigJobSimple(object):
             tasks = [tasks] 
         self._tasks.extend(tasks)
 
+        # list of result 'futures'
+        results = []
+
         for task in tasks:
-            result = self.pool.apply_async(_compute_unit_launcher_worker, (self._remote_workdir_url, task, ))
+            # register a callback on the task that will add it to BigJob 
+            # once it has reached a pending state
+            result = self.pool.apply_async(_compute_unit_launcher_worker, 
+                (self._remote_workdir_url, task))
+            results.append(result)
+
+        for r in results:
+            task = r.get()
+            try:
+                cu_description = pilot.ComputeUnitDescription()
+                cu_description.executable        = task.executable
+                cu_description.arguments         = task.arguments
+                cu_description.working_directory = "%s/%s" % (self._workdir, task.dir_name)
+                cu_description.output            = "STDOUT"
+                cu_description.error             = "STDERR"
+
+                self._pilot_job.submit_compute_unit(cu_description)
+
+            except Exception, ex:
+                task._log.append(str(ex))
+                task._set_and_propagate_state_change_priv(new_state=FAILED)
+                return -1
+
+
 
     # ------------------------------------------------------------------------
     #
@@ -227,7 +277,8 @@ class BigJobSimple(object):
             pilot_description.service_url         = self._resource['jobmgr_url']
             pilot_description.number_of_processes = self._cores
             pilot_description.walltime            = self._runtime
-            pilot_description.project             = self._project_id
+            if self._project_id is not None:
+                pilot_description.project         = self._project_id
             if self._queue == DEFAULT:
                 pilot_description.queue           = self._resource['jobmgr_queue']
             else:
@@ -244,7 +295,7 @@ class BigJobSimple(object):
 
             # Launch Pilot Job
             self._log.append("Launching Pilot Job: %s" % str(pilot_description))
-            self._pilotjob = pilot_service.create_pilot(pilot_description)
+            self._pilot_job = pilot_service.create_pilot(pilot_description)
 
         except Exception, ex:
             # something went wrong. append the exception to the log 
