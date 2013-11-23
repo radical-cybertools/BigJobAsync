@@ -12,7 +12,7 @@ def resource_cb(origin, old_state, new_state):
     Obviously, more logic can be built into the callback function, for 
     example fault tolerance.
     """ 
-    msg = " * BigJob %s state changed from '%s' to '%s'.\n" % \
+    msg = " * BigJob '%s' state changed from '%s' to '%s'.\n" % \
         (str(origin), old_state, new_state)
     sys.stderr.write(msg)
 
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     # start a new big job instance on stampede
     stampede = bjsimple.BigJobSimple(
         #resource=bjsimple.RESOURCES['XSEDE.STAMPEDE'],
+        name="ALAMO:8cores",
         resource=bjsimple.RESOURCES['FUTUREGRID.ALAMO'],
         runtime=5, # minutes
         cores=8,

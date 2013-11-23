@@ -1,8 +1,12 @@
 from task import * 
+import threading
 from multiprocessing import Pool
 
+import time
 import saga
 import pilot
+
+
 
 
 # ----------------------------------------------------------------------------
@@ -27,7 +31,7 @@ RESOURCES = {
 
 # ----------------------------------------------------------------------------
 # MULTIPROCESSING POOL WORKERS
-MAX_WORKERS = 4
+MAX_WORKERS = 8
 
 # ----------------------------------------------------------------------------
 # CONSTANTS
@@ -38,6 +42,208 @@ PENDING = "Pending"
 RUNNING = "Running"
 FAILED  = "Failed"
 DONE    = "Done"
+
+
+#-----------------------------------------------------------------------------
+#
+class BigJobThread(threading.Thread):
+
+    #-------------------------------------------------------------------------
+    #
+    def __init__(self, simple_bigjob_object):
+        """Le Constructeur creates a new BigJob-in-a-thread. 
+        """
+        threading.Thread.__init__(self)
+        self.daemon    = True
+        self.lock      = threading.Lock()
+        self.terminate = threading.Event()
+
+
+        self.tasks     = list()
+        self.pilotjob  = None
+        self.sbj_obj   = simple_bigjob_object
+
+    # ------------------------------------------------------------------------
+    #
+    def stop(self):
+        """Tries to terminate the run() loop.
+        """
+        self.terminate.set()
+
+    # ------------------------------------------------------------------------
+    #
+    def run(self):
+        """Start the thread.
+        """
+
+        # first we try to launch a BigJob
+        self._launch_bj()
+        
+        # And then we loop until we get interrupted 
+        while not self.terminate.isSet():
+
+            # peridically update bigjob state
+            #if self.sbj_obj.state not in [PENDING, RUNNING]:
+            self._update_bigjob_state(self.sbj_obj)
+
+            self.lock.acquire() # FIX -- ineffective lock
+
+            for task in self.tasks:
+                if task['task_obj'].state == NEW:
+                    # new task needs to be launched
+                    self._launch_task(task)
+                elif task['task_obj'].state in [PENDING, RUNNING]:
+                    self._update_task_state(task)
+                else:
+                    # do nothing
+                    pass
+
+            self.lock.release()
+            time.sleep(1)
+
+
+    # ------------------------------------------------------------------------
+    #
+    def _launch_task(self, task):
+
+        try:
+            cu_description = pilot.ComputeUnitDescription()
+            cu_description.executable        = task['task_obj'].executable
+            cu_description.arguments         = task['task_obj'].arguments
+            cu_description.working_directory = "%s/%s" % (self.sbj_obj._workdir, task['task_obj'].dir_name)
+            cu_description.output            = "STDOUT"
+            cu_description.error             = "STDERR"
+
+            cu = self.pilotjob.submit_compute_unit(cu_description)
+            task['cu_obj'] = cu
+
+            task['task_obj']._set_and_propagate_state_change_priv(new_state=PENDING)
+
+        except Exception, ex:
+            task['task_obj']._log.append(str(ex))
+            task['task_obj']._set_and_propagate_state_change_priv(new_state=FAILED)
+            return -1
+
+
+    # ------------------------------------------------------------------------
+    #
+    def _update_bigjob_state(self, sbj_obj):
+        try:
+            state = self.pilotjob.get_state().lower() 
+        except Exception, ex:
+            self.sbj_obj._log.append(str(ex))
+            self.sbj_obj._set_and_propagate_state_change_priv(new_state=FAILED)
+            return
+
+        if state == 'unknown':
+            translated_state = PENDING
+        elif state == 'running':
+            translated_state = RUNNING
+        elif state == 'done':
+            translated_state = DONE
+        else:
+            translated_state = FAILED
+
+        sbj_obj._set_and_propagate_state_change_priv(translated_state)
+
+    # ------------------------------------------------------------------------
+    #
+    def _update_task_state(self, task):
+
+        # fuzzy sanity check. 
+        if task['cu_obj'] == None:
+            return
+
+        try:
+            state = task['cu_obj'].get_state().lower() 
+        except Exception, ex:
+            task['task_obj']._log.append(str(ex))
+            task['task_obj']._set_and_propagate_state_change_priv(new_state=FAILED)
+            return
+
+        if state == 'unknown':
+            translated_state = PENDING
+        elif state == 'running':
+            translated_state = RUNNING
+        elif state == 'done':
+            translated_state = DONE
+        else:
+            translated_state = FAILED
+
+        task['task_obj']._set_and_propagate_state_change_priv(translated_state)
+
+
+    # ------------------------------------------------------------------------
+    #
+    def add_tasks(self, tasks):
+        """Adds one or more tasks to the BigJob-in-a-thread.
+        """
+        if not isinstance(tasks, list):
+            tasks = [tasks]
+
+        self.lock.acquire()
+        for task in tasks:
+            self.tasks.append(
+                {
+                    'task_obj': task, 
+                    'cu_obj': None, 
+                    'submitted': False
+                })
+        self.lock.release()
+
+    # ------------------------------------------------------------------------
+    #
+    def _launch_bj(self):
+        """Starts a BigJob on the target machine.
+        """
+        try: 
+            # Try to create the working directory. If This fails, we set the 
+            # state of this BigJob to 'Failed'.
+            d = saga.filesystem.Directory(self.sbj_obj._remote_workdir_url, 
+                saga.filesystem.CREATE_PARENTS)
+            d.close()
+        except Exception, ex:
+            self.sbj_obj._log.append(str(ex))
+            self.sbj_obj._set_and_propagate_state_change_priv(new_state=FAILED)
+            return
+
+        # Launch the BigJob
+        try:
+            # Create working directory 
+
+            # Create pilot description
+            pilot_description = pilot.PilotComputeDescription()
+            pilot_description.service_url         = self.sbj_obj._resource['jobmgr_url']
+            pilot_description.number_of_processes = self.sbj_obj._cores
+            pilot_description.walltime            = self.sbj_obj._runtime
+            if self.sbj_obj._project_id is not None:
+                pilot_description.project         = self.sbj_obj._project_id
+            if self.sbj_obj._queue == DEFAULT:
+                pilot_description.queue           = self.sbj_obj._resource['jobmgr_queue']
+            else:
+                pilot_description.queue           = self.sbj_obj._queue
+            url = saga.Url(self.sbj_obj._resource['shared_fs_url'])
+            url.path = self.sbj_obj.workdir
+            pilot_description.working_directory   = url.path
+
+            # Connect to REDIS, create Pilot Compute Service
+            redis_url = "redis://%s@%s" % (self.sbj_obj._resource['redis_pwd'], 
+                self.sbj_obj._resource['redis_host'])
+            self.sbj_obj._log.append("Connecting to REDIS server at %s" % self.sbj_obj._resource['redis_host'])
+            pilot_service = pilot.PilotComputeService(redis_url)
+
+            # Launch Pilot Job
+            self.sbj_obj._log.append("Launching Pilot Job: %s" % str(pilot_description))
+            self.pilotjob = pilot_service.create_pilot(pilot_description)
+
+        except Exception, ex:
+            # something went wrong. append the exception to the log 
+            # and call the callbacks.
+            self.sbj_obj._log.append(str(ex))
+            self.sbj_obj._set_and_propagate_state_change_priv(new_state=FAILED)
+
+        self.sbj_obj._set_and_propagate_state_change_priv(new_state=PENDING)
+
 
 # ----------------------------------------------------------------------------
 # 
@@ -70,6 +276,7 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
                 local_filename = "file://localhost//%s" % directive['origin']
                 local_file = saga.filesystem.File(local_filename)
                 local_file.copy(task_workdir.url)
+                local_file.close()
             except Exception, ex:
                 task._log.append(str(ex))
                 task._set_and_propagate_state_change_priv(new_state=FAILED)
@@ -80,11 +287,13 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
                 # copy around stuff locally on the remote machine
                 task._log.append("Copying REMOTE input file '%s'" % directive['origin'])
                 task_workdir.copy(directive['origin'], ".")
-                local_file.copy(task_workdir.url)
             except Exception, ex:
                 task._log.append(str(ex))
                 task._set_and_propagate_state_change_priv(new_state=FAILED)
                 return -1
+
+    task_workdir.close()
+    remote_workdir.close()
 
     # Now that the file transfers have completed, we can create a 
     # work unit and submit it to the BigJob
@@ -107,6 +316,17 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
     # return the compute unit description
     return task
 
+
+
+
+
+
+
+
+
+
+
+
 # ----------------------------------------------------------------------------
 #
 class BigJobSimple(object):
@@ -115,13 +335,14 @@ class BigJobSimple(object):
 
     # ------------------------------------------------------------------------
     #
-    def __init__(self, resource, runtime, cores, workdir, project_id=None, queue=DEFAULT):
+    def __init__(self, name, resource, runtime, cores, workdir, project_id=None, queue=DEFAULT):
         """Creates a new BigJob instance.
         """
         self._cbs = []
         self._log = []
         self._tasks = []
 
+        self._name = name
         self._resource = resource
         self._runtime = runtime
         self._cores = cores
@@ -129,19 +350,26 @@ class BigJobSimple(object):
         self._workdir = workdir
         self._queue = queue
 
+        self._cus = []
         self._pilot_job = None
         self._state = NEW
 
         # The URL of the working directorty.
         self._remote_workdir_url = "%s/%s/" % (self._resource['shared_fs_url'], self.workdir)
 
+
+        # BigJob-in-a-thread
+        self.bj_thread = BigJobThread(self)
+
+
         # The worker pool handles asynchronous interaction with BigJob 
+
         self.pool = Pool(processes=MAX_WORKERS)  
 
     # ------------------------------------------------------------------------
     #
     def __str__(self):
-        return "ME!"
+        return self._name
 
     # ------------------------------------------------------------------------
     #
@@ -150,6 +378,15 @@ class BigJobSimple(object):
         """Returns the full log.
         """
         return self._log
+
+    # ------------------------------------------------------------------------
+    #
+    @property
+    def state(self):
+        """Returns the state.
+        """
+        return self._state
+
 
     # ------------------------------------------------------------------------
     #
@@ -185,27 +422,16 @@ class BigJobSimple(object):
         on the target machine.
         """
 
-        # Try to create the working directory. If This fails, we set the 
-        # state of this BigJob to 'Failed'.
-        try: 
-            saga.filesystem.Directory(self._remote_workdir_url, saga.filesystem.CREATE_PARENTS)
-        except Exception, ex:
-            self._log.append(str(ex))
-            self._set_and_propagate_state_change_priv(new_state=FAILED)
-            return
-
-        # Launch the BigJob
-        self._launch_pj_priv()
-        self._set_and_propagate_state_change_priv(new_state=PENDING)
+        # All we really do here is to start BigJob-in-a-thread
+        self.bj_thread.start()
+        
 
     # ------------------------------------------------------------------------
     #
     def wait(self):
         """Waits...
         """
-        import time
-        time.sleep(120)
-        self._set_and_propagate_state_change_priv(new_state=DONE)
+        time.sleep(300)
 
     # ------------------------------------------------------------------------
     #
@@ -216,7 +442,6 @@ class BigJobSimple(object):
             tasks = [tasks] 
         self._tasks.extend(tasks)
 
-        # list of result 'futures'
         results = []
 
         for task in tasks:
@@ -227,81 +452,8 @@ class BigJobSimple(object):
             results.append(result)
 
         for r in results:
-            task = r.get()
-            try:
-                cu_description = pilot.ComputeUnitDescription()
-                cu_description.executable        = task.executable
-                cu_description.arguments         = task.arguments
-                cu_description.working_directory = "%s/%s" % (self._workdir, task.dir_name)
-                cu_description.output            = "STDOUT"
-                cu_description.error             = "STDERR"
-
-                self._pilot_job.submit_compute_unit(cu_description)
-
-            except Exception, ex:
-                task._log.append(str(ex))
-                task._set_and_propagate_state_change_priv(new_state=FAILED)
-                return -1
-
-
-
-    # ------------------------------------------------------------------------
-    #
-    def _do_file_transfer_in(self, task, task_workdir):
-        """Takes care of file staging.
-
-        Directives look like this::
-
-            {
-                "type" : bjsimple.LOCAL_FILE,  "mode": bjsimple.COPY, 
-                "origin" : "/Users/oweidner/Work/Data/test/loreipsum_pt1.txt"
-            }
-
-        """
-        # Do nothing if there's not input defined
-        if len(task._input) < 1:
-            return 
-
-
-
-    # ------------------------------------------------------------------------
-    #
-    def _launch_pj_priv(self):
-        """Create the base working directory and launches a BigJob.
-        """
-        try:
-            # Create working directory 
-
-            # Create pilot description
-            pilot_description = pilot.PilotComputeDescription()
-            pilot_description.service_url         = self._resource['jobmgr_url']
-            pilot_description.number_of_processes = self._cores
-            pilot_description.walltime            = self._runtime
-            if self._project_id is not None:
-                pilot_description.project         = self._project_id
-            if self._queue == DEFAULT:
-                pilot_description.queue           = self._resource['jobmgr_queue']
-            else:
-                pilot_description.queue           = self._queue
-            url = saga.Url(self._resource['shared_fs_url'])
-            url.path = self.workdir
-            pilot_description.working_directory   = url.path
-
-            # Connect to REDIS, create Pilot Compute Service
-            redis_url = "redis://%s@%s" % (self._resource['redis_pwd'], 
-                self._resource['redis_host'])
-            self._log.append("Connecting to REDIS server at %s" % self._resource['redis_host'])
-            pilot_service = pilot.PilotComputeService(redis_url)
-
-            # Launch Pilot Job
-            self._log.append("Launching Pilot Job: %s" % str(pilot_description))
-            self._pilot_job = pilot_service.create_pilot(pilot_description)
-
-        except Exception, ex:
-            # something went wrong. append the exception to the log 
-            # and call the callbacks.
-            self._log.append(str(ex))
-            self._set_and_propagate_state_change_priv(new_state=FAILED)
+            task = r.get() ## THIS IS NOT OPTIMAL
+            self.bj_thread.add_tasks(tasks)
 
     # ------------------------------------------------------------------------
     #

@@ -72,6 +72,12 @@ class Task(object):
 
     # ------------------------------------------------------------------------
     #
+    @property 
+    def state(self):
+        return self._state
+
+    # ------------------------------------------------------------------------
+    #
     @property
     def log(self):
         """Returns the full log.
