@@ -43,20 +43,17 @@ if __name__ == "__main__":
 
     # start a new big job instance on stampede
     stampede = bjsimple.BigJobSimple(
-        #resource=bjsimple.RESOURCES['XSEDE.STAMPEDE'],
         name="ALAMO:8cores",
         resource=bjsimple.RESOURCES['FUTUREGRID.ALAMO'],
         runtime=5, # minutes
         cores=8,
-        #workdir="/scratch/00988/tg802352/test/"
         workdir="/N/work/oweidner/example/"
-        #project_id="TG-MCB090174",
     )
 
     stampede.register_callbacks(resource_cb)
     stampede.allocate()
 
-    # define 128 tasks, and their 
+    # define tasks and their input and output files
     my_tasks = []
 
     for i in range(0, 2):
@@ -67,18 +64,17 @@ if __name__ == "__main__":
             ], 
             input=[
                 {   # RENAME origin -> location
-                    "where"  : bjsimple.LOCAL,  "mode": bjsimple.COPY, 
-                    "origin" : "/Users/oweidner/Work/Data/loreipsum_pt1.txt"
+                    "location" : bjsimple.LOCAL,  "mode": bjsimple.COPY, 
+                    "path"     : "/Users/oweidner/Work/Data/loreipsum_pt1.txt"
                 },
                 {
-                    "where"  : bjsimple.REMOTE, "mode": bjsimple.COPY, 
-                    #origin" : "/home1/00988/tg802352/loreipsum_pt2.txt"
-                    "origin" : "/N/u/oweidner/loreipsum_pt2.txt"
+                    "location" : bjsimple.REMOTE, "mode": bjsimple.COPY, 
+                    "path"     : "/N/u/oweidner/loreipsum_pt2.txt"
                 }
             ], 
             output=[
                 {
-                    "origin" : "loreipsum.txt", "destination" : "."
+                    "path" : "loreipsum.txt", "destination" : "."
                 }
             ]
         )

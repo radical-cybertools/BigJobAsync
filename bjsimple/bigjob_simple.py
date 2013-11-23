@@ -99,7 +99,7 @@ class BigJobThread(threading.Thread):
                     pass
 
             self.lock.release()
-            time.sleep(1)
+            time.sleep(2)
 
 
     # ------------------------------------------------------------------------
@@ -268,12 +268,12 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
     task._set_and_propagate_state_change_priv(new_state=TRANSFER_INPUT)
 
     for directive in task._input:
-        if directive['where'] == LOCAL:
+        if directive['location'] == LOCAL:
             try: 
                 # we use saga-python to copy a local file to the 
                 # remote destination
-                task._log.append("Copying LOCAL input file '%s'" % directive['origin'])
-                local_filename = "file://localhost//%s" % directive['origin']
+                task._log.append("Copying LOCAL input file '%s'" % directive['path'])
+                local_filename = "file://localhost//%s" % directive['path']
                 local_file = saga.filesystem.File(local_filename)
                 local_file.copy(task_workdir.url)
                 local_file.close()
@@ -282,11 +282,11 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
                 task._set_and_propagate_state_change_priv(new_state=FAILED)
                 return -1
 
-        elif directive['where'] == REMOTE:
+        elif directive['location'] == REMOTE:
             try: 
                 # copy around stuff locally on the remote machine
-                task._log.append("Copying REMOTE input file '%s'" % directive['origin'])
-                task_workdir.copy(directive['origin'], ".")
+                task._log.append("Copying REMOTE input file '%s'" % directive['path'])
+                task_workdir.copy(directive['path'], ".")
             except Exception, ex:
                 task._log.append(str(ex))
                 task._set_and_propagate_state_change_priv(new_state=FAILED)
