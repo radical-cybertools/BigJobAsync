@@ -1,7 +1,9 @@
+from task import * 
+from multiprocessing import Pool
+
 import saga
 import pilot
 
-from task import * 
 
 # ----------------------------------------------------------------------------
 # RESOURCE DICTIONARY
@@ -15,6 +17,9 @@ RESOURCES = {
     }
 }
 
+# ----------------------------------------------------------------------------
+# MULTIPROCESSING POOL WORKERS
+MAX_WORKERS = 4
 
 # ----------------------------------------------------------------------------
 # CONSTANTS
@@ -26,9 +31,63 @@ RUNNING = "Running"
 FAILED  = "Failed"
 DONE    = "Done"
 
+# ----
+#
+def _compute_unit_launcher_worker(remote_work_dir_url, task):
+    # we use a single directory instance that we pass around for 
+    # performance reasons as it keeps the connection open. 
+    remote_workdir = saga.filesystem.Directory(remote_work_dir_url)
+
+    # next, we iterate over the tasks and try to submit them to BigJob 
+    # after the input data has been staged. 
+    try:
+        # create working directories for tasks based on the task uid
+        task._log.append("Creating working directory '%s'" % task.dir_name)
+        task_workdir = remote_workdir.open_dir(task.dir_name, saga.filesystem.CREATE)
+    except Exception, ex:
+        task._log.append(str(ex))
+        task._set_and_propagate_state_change_priv(new_state=FAILED)
+        return
+
+    # Next we can take care of the file transfers
+    # Change the state to 'TransferInput'
+    task._set_and_propagate_state_change_priv(new_state=TRANSFER_INPUT)
+
+    for directive in task._input:
+        if directive['where'] == LOCAL:
+            try: 
+                # we use saga-python to copy a local file to the 
+                # remote destination
+                task._log.append("Copying LOCAL input file '%s'" % directive['origin'])
+                local_filename = "file://localhost//%s" % directive['origin']
+                local_file = saga.filesystem.File(local_filename)
+                local_file.copy(task_workdir.url)
+            except Exception, ex:
+                task._log.append(str(ex))
+                task._set_and_propagate_state_change_priv(new_state=FAILED)
+                return
+
+        elif directive['where'] == REMOTE:
+            try: 
+                # copy around stuff locally on the remote machine
+                task._log.append("Copying REMOTE input file '%s'" % directive['origin'])
+                task_workdir.copy(directive['origin'], ".")
+                local_file.copy(task_workdir.url)
+            except Exception, ex:
+                task._log.append(str(ex))
+                task._set_and_propagate_state_change_priv(new_state=FAILED)
+                return
+
+    # Set state to 'Pending'. From here on, BigJob will
+    # determine the state of this task.
+    task._set_and_propagate_state_change_priv(new_state=PENDING)
+
+
 # ----------------------------------------------------------------------------
 #
 class BigJobSimple(object):
+
+
 
     # ------------------------------------------------------------------------
     #
@@ -51,6 +110,9 @@ class BigJobSimple(object):
 
         # The URL of the working directorty.
         self._remote_workdir_url = "%s/%s/" % (self._resource['shared_fs_url'], self.workdir)
+
+        # The worker pool handles asynchronous interaction with BigJob 
+        self.pool = Pool(processes=MAX_WORKERS)  
 
     # ------------------------------------------------------------------------
     #
@@ -117,6 +179,8 @@ class BigJobSimple(object):
     def wait(self):
         """Waits...
         """
+        import time
+        time.sleep(120)
         self._set_and_propagate_state_change_priv(new_state=DONE)
 
     # ------------------------------------------------------------------------
@@ -128,30 +192,8 @@ class BigJobSimple(object):
             tasks = [tasks] 
         self._tasks.extend(tasks)
 
-        # we use one global directory instance for performance reasons
-        # as it keeps the connection open. 
-        remote_workdir = saga.filesystem.Directory(self._remote_workdir_url)
-
-        for task in self._tasks:
-
-            try:
-                # create working directories for tasks based on the task uid
-                task._log.append("Creating working directory '%s'" % task.dir_name)
-                task_workdir = remote_workdir.open_dir(task.dir_name, saga.filesystem.CREATE)
-            except Exception, ex:
-                task._log.append(str(ex))
-                task._set_and_propagate_state_change_priv(new_state=FAILED)
-                continue
-
-            # next we can take care of the file transfers
-            self._do_file_transfer_in(task, task_workdir)
-
-            # Set state to 'Pending'. From here on, BigJob will
-            # determine the state of this task.
-            task._set_and_propagate_state_change_priv(new_state=PENDING)
-
-        remote_workdir.close()
-
+        for task in tasks:
+            result = self.pool.apply_async(_compute_unit_launcher_worker, (self._remote_workdir_url, task, ))
 
     # ------------------------------------------------------------------------
     #
@@ -170,33 +212,7 @@ class BigJobSimple(object):
         if len(task._input) < 1:
             return 
 
-        # Change the state to 'TransferInput'
-        task._set_and_propagate_state_change_priv(new_state=TRANSFER_INPUT)
 
-        for directive in task._input:
-            if directive['where'] == LOCAL:
-                try: 
-                    # we use saga-python to copy a local file to the 
-                    # remote destination
-                    task._log.append("Copying LOCAL input file '%s'" % directive['origin'])
-                    local_filename = "file://localhost//%s" % directive['origin']
-                    local_file = saga.filesystem.File(local_filename)
-                    local_file.copy(task_workdir.url)
-                except Exception, ex:
-                    task._log.append(str(ex))
-                    task._set_and_propagate_state_change_priv(new_state=FAILED)
-                    return
-
-            elif directive['where'] == REMOTE:
-                try: 
-                    # copy around stuff locally on the remote machine
-                    task._log.append("Copying REMOTE input file '%s'" % directive['origin'])
-                    task_workdir.copy(directive['origin'], ".")
-                    local_file.copy(task_workdir.url)
-                except Exception, ex:
-                    task._log.append(str(ex))
-                    task._set_and_propagate_state_change_priv(new_state=FAILED)
-                    return
 
     # ------------------------------------------------------------------------
     #
