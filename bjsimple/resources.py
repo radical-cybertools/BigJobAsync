@@ -15,9 +15,9 @@ RESOURCES = {
     'XSEDE.STAMPEDE': {
         'redis_host'    : 'gw68.quarry.iu.teragrid.org:6379',
         'redis_pwd'     : 'ILikeBigJob_wITH-REdIS',
-        'jobmgr_url'    : 'slurm+ssh://login4.stampede.tacc.utexas.edu',
+        'jobmgr_url'    : 'slurm+ssh://stampede.tacc.utexas.edu',
         'jobmgr_queue'  : 'normal',
-        'shared_fs_url' : 'sftp://login4.stampede.tacc.utexas.edu/',
+        'shared_fs_url' : 'sftp://stampede.tacc.utexas.edu/',
     },
     
     'XSEDE.LONESTAR': {
@@ -36,3 +36,4 @@ RESOURCES = {
         'shared_fs_url' : 'sftp://alamo.futuregrid.org/',
     }
 }
+    

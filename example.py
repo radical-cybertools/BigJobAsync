@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # Define tasks and their input and output files
     all_tasks = []
 
-    for i in range(0, 512):
+    for i in range(0, 256):
 
         # A 'combinator' tasks takes two input files and appends one to the 
         # other. The first input file 'loreipsum_pt1.txt' is copied from the
