@@ -43,29 +43,34 @@ if __name__ == "__main__":
 
     # start a new big job instance on stampede
     stampede = bjsimple.BigJobSimple(
-        name="STAMPEDE:16cores",
-
-        resource=bjsimple.RESOURCES['XSEDE.STAMPEDE'],
-        runtime=5, # minutes
-        cores=16,
-        workdir="/scratch/00988/tg802352/example/",
-        project_id="TG-MCB090174",
+        name       = "stampede:16cores", # give the bigjob instance a name
+        resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], # resource
+        runtime    = 1, # bigjob runtime in minutes (a.k.a. wall-clock time)
+        cores      = 16, # total number of cores to allocate
+        workdir    = "/scratch/00988/tg802352/example/", # working directory
+        project_id = "TG-MCB090174", # project ID to use for billing
     )
 
     stampede.register_callbacks(resource_cb)
     stampede.allocate()
 
     # define tasks and their input and output files
-    my_tasks = []
+    all_tasks = []
 
     for i in range(0, 16):
 
-        task = bjsimple.Task(
-            name="my-task-%s" % i,
-            executable="/bin/bash",
-            arguments=["-c", "\"/bin/cat loreipsum_pt1.txt loreipsum_pt2.txt >> loreipsum.txt\""
+        # A 'combinator' tasks takes two input files and appends one to the 
+        # other. The first input file 'loreipsum_pt1.txt' is copied from the
+        # local machine to the executing cluster. The second file is already 
+        # one the remote cluster and is copied locally into the task's
+        # working directory. The resulting output file 'loreipsum.txt' is 
+        # copied back to the local machine.
+        combinator = bjsimple.Task(
+            name       = "my-task-%s" % i,
+            executable = "/bin/bash",
+            arguments  = ["-c", "\"/bin/cat loreipsum_pt1.txt loreipsum_pt2.txt >> loreipsum.txt\""
             ], 
-            input=[
+            input = [
                 {   # RENAME origin -> location
                     "location" : bjsimple.LOCAL,  "mode": bjsimple.COPY, 
                     "path"     : "/Users/oweidner/Work/Data/loreipsum_pt1.txt"
@@ -75,17 +80,18 @@ if __name__ == "__main__":
                     "path"     : "/home1/00988/tg802352/loreipsum_pt2.txt"
                 }
             ], 
-            output=[
+            output = [
                 {
-                    "path" : "loreipsum.txt", "destination" : "."
+                    "path"        : "loreipsum.txt", 
+                    "destination" : "/tmp/loreipsum-%s.txt" % i
                 }
             ]
         )
-        task.register_callbacks(task_cb)
-        my_tasks.append(task)
+        combinator.register_callbacks(task_cb)
+        all_tasks.append(combinator)
 
     # submit them to stampede
-    stampede.schedule_tasks(my_tasks)
+    stampede.schedule_tasks(all_tasks)
     
     # wait for everything to finish
     stampede.wait()

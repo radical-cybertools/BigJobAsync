@@ -51,17 +51,17 @@ class BigJobThread(threading.Thread):
     #-------------------------------------------------------------------------
     #
     def __init__(self, simple_bigjob_object):
-        """Le Constructeur creates a new BigJob-in-a-thread. 
+        """Le Constructeur creates a new 'BigJob-in-a-thread' (tm). 
         """
         threading.Thread.__init__(self)
         self.daemon    = True
         self.lock      = threading.Lock()
         self.terminate = threading.Event()
 
-
-        self.tasks     = list()
-        self.pilotjob  = None
-        self.sbj_obj   = simple_bigjob_object
+        self.tasks         = list()
+        self.pilot_service = None
+        self.pilotjob      = None
+        self.sbj_obj       = simple_bigjob_object
 
     # ------------------------------------------------------------------------
     #
@@ -78,18 +78,25 @@ class BigJobThread(threading.Thread):
 
         # first we try to launch a BigJob
         self._launch_bj()
+        start_time = time.time()
         
         # And then we loop until we get interrupted 
         while not self.terminate.isSet():
 
-            # peridically update bigjob state
-            #print "%s -- %s" % ( self.pilotjob.get_state(), self.sbj_obj.state)
+            # sometimes pilot jobs have the tendency not terminate 
+            # properly. in this case, we monitor the runtime and terminate
+            # manually after the rumtime (+ some grace period) has expired
+            if time.time() - start_time >= (self.sbj_obj._runtime + 1)  * 60:
+                self.stop()
 
+            # peridically update bigjob state
             if self.sbj_obj.state in [PENDING, RUNNING]:
                 self._update_bigjob_state(self.sbj_obj)
+            else:
+                # causes the main loop to termiante after this iteration
+                self.stop()
 
-            self.lock.acquire() # FIX -- ineffective lock
-
+            self.lock.acquire() # FIX -- not the most effective lock
             for task in self.tasks:
                 if task['submitted'] == False:
                     # task needs to be launched
@@ -102,9 +109,16 @@ class BigJobThread(threading.Thread):
                     else:
                         # task is in a terminal state. do nothing
                         pass
-
             self.lock.release()
+
+            self.sbj_obj._runtime
+
             time.sleep(1)
+
+        # once we have left the main loop, the only thing left to do
+        # is to cancel the pilot job and its service and set the final state
+        self.pilot_service.cancel()
+        self.sbj_obj._set_and_propagate_state_change_priv(new_state=DONE)
 
 
     # ------------------------------------------------------------------------
@@ -237,11 +251,11 @@ class BigJobThread(threading.Thread):
             redis_url = "redis://%s@%s" % (self.sbj_obj._resource['redis_pwd'], 
                 self.sbj_obj._resource['redis_host'])
             self.sbj_obj._log.append("Connecting to REDIS server at %s" % self.sbj_obj._resource['redis_host'])
-            pilot_service = pilot.PilotComputeService(redis_url)
+            self.pilot_service = pilot.PilotComputeService(redis_url)
 
             # Launch Pilot Job
             self.sbj_obj._log.append("Launching Pilot Job: %s" % str(pilot_description))
-            self.pilotjob = pilot_service.create_pilot(pilot_description)
+            self.pilotjob = self.pilot_service.create_pilot(pilot_description)
 
         except Exception, ex:
             # something went wrong. append the exception to the log 
@@ -421,7 +435,7 @@ class BigJobSimple(object):
     def wait(self):
         """Waits...
         """
-        time.sleep(300)
+        self.bj_thread.join()
 
     # ------------------------------------------------------------------------
     #
