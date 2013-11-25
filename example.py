@@ -1,41 +1,15 @@
+#!/usr/bin/env python
+
+"""DOCSTRING
+"""
+
+__author__    = "Ole Weidner"
+__email__     = "ole.weidner@rutgers.edu"
+__copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
+__license__   = "MIT"
+
 import sys
 import bjsimple 
-
-# ----------------------------------------------------------------------------
-#
-def resource_cb(origin, old_state, new_state):
-    """Big job callback function: writes BigJob state changes to STDERR.
-
-    It aborts the script script with exit code '-1' if BigJob 
-    state is 'FAILED'.
-
-    Obviously, more logic can be built into the callback function, for 
-    example fault tolerance.
-    """ 
-    msg = " * BigJob '%s' state changed from '%s' to '%s'.\n" % \
-        (str(origin), old_state, new_state)
-    sys.stderr.write(msg)
-
-    if new_state == bjsimple.FAILED:
-        # Print the log and exit if big job has failed
-        for entry in origin.log:
-            print "   * LOG: %s" % entry
-        sys.stderr.write("   * EXITING.\n")
-        sys.exit(-1)
-
-# ----------------------------------------------------------------------------
-#
-def task_cb(origin, old_state, new_state):
-    """Task callback function: writes task state changes to STDERR
-    """
-    msg = " * Task %s state changed from '%s' to '%s'.\n" % \
-        (str(origin), old_state, new_state)
-    sys.stderr.write(msg)
-
-    if new_state == bjsimple.FAILED:
-        # Print the log entry if task has failed to run
-      for entry in origin.log:
-            print "     LOG: %s" % entry
 
 # ----------------------------------------------------------------------------
 #
@@ -49,7 +23,7 @@ if __name__ == "__main__":
     #
     #    * name       - a name for easier identification 
     #    * resource   - the resource to use. The full resource dictionary 
-    #                   is in 'bigjob_simple.py'. 
+    #                   is in 'resources.py'. 
     #    * runtime    - runtime in minutes (a.k.a. wall-clock time)
     #    * cores      - total number of cores to allocate
     #    * workdir    - base working directory for all tasks
@@ -58,7 +32,7 @@ if __name__ == "__main__":
     stampede = bjsimple.BigJobSimple(
         name       = "stampede:16cores", 
         resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
-        runtime    = 2, 
+        runtime    = 10, 
         cores      = 16, 
         workdir    = "/scratch/00988/tg802352/example/",
         project_id = "TG-MCB090174"
@@ -80,7 +54,7 @@ if __name__ == "__main__":
     # Define tasks and their input and output files
     all_tasks = []
 
-    for i in range(0, 16):
+    for i in range(0, 64):
 
         # A 'combinator' tasks takes two input files and appends one to the 
         # other. The first input file 'loreipsum_pt1.txt' is copied from the
@@ -134,3 +108,43 @@ if __name__ == "__main__":
     
     # Wait for the BigJob to finish
     stampede.wait()
+
+    sys.exit(0)
+
+
+# ----------------------------------------------------------------------------
+#
+def resource_cb(origin, old_state, new_state):
+    """Big job callback function: writes BigJob state changes to STDERR.
+
+    It aborts the script script with exit code '-1' if BigJob 
+    state is 'FAILED'.
+
+    Obviously, more logic can be built into the callback function, for 
+    example fault tolerance.
+    """ 
+    msg = " * BigJob '%s' state changed from '%s' to '%s'.\n" % \
+        (str(origin), old_state, new_state)
+    sys.stderr.write(msg)
+
+    if new_state == bjsimple.FAILED:
+        # Print the log and exit if big job has failed
+        for entry in origin.log:
+            print "   * LOG: %s" % entry
+        sys.stderr.write("   * EXITING.\n")
+        sys.exit(-1)
+
+# ----------------------------------------------------------------------------
+#
+def task_cb(origin, old_state, new_state):
+    """Task callback function: writes task state changes to STDERR
+    """
+    msg = " * Task %s state changed from '%s' to '%s'.\n" % \
+        (str(origin), old_state, new_state)
+    sys.stderr.write(msg)
+
+    if new_state == bjsimple.FAILED:
+        # Print the log entry if task has failed to run
+      for entry in origin.log:
+            print "     LOG: %s" % entry
+

@@ -1,17 +1,18 @@
+#!/usr/bin/env python
+
+"""DOCSTRING
+"""
+
+__author__    = "Ole Weidner"
+__email__     = "ole.weidner@rutgers.edu"
+__copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
+__license__   = "MIT"
+
+#global includes
 import uuid
 
-# ----------------------------------------------------------------------------
-# CONSTANTS
-COPY            = 'Copy'
-LOCAL           = 'LocalFile'
-REMOTE          = 'RemoteFile'
-NEW             = "New"
-PENDING         = "Pending"
-TRANSFER_INPUT  = "TransferInput"
-RUNNING         = "Running"
-TRANSFER_OUTPUT = "TransferOutput"
-FAILED          = "Failed"
-DONE            = "Done"
+# local includes
+from constants import * 
 
 # ----------------------------------------------------------------------------
 #
