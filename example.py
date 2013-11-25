@@ -43,11 +43,13 @@ if __name__ == "__main__":
 
     # start a new big job instance on stampede
     stampede = bjsimple.BigJobSimple(
-        name="ALAMO:8cores",
-        resource=bjsimple.RESOURCES['FUTUREGRID.ALAMO'],
+        name="STAMPEDE:16cores",
+
+        resource=bjsimple.RESOURCES['XSEDE.STAMPEDE'],
         runtime=5, # minutes
-        cores=8,
-        workdir="/N/work/oweidner/example/"
+        cores=16,
+        workdir="/scratch/00988/tg802352/example/",
+        project_id="TG-MCB090174",
     )
 
     stampede.register_callbacks(resource_cb)
@@ -56,7 +58,8 @@ if __name__ == "__main__":
     # define tasks and their input and output files
     my_tasks = []
 
-    for i in range(0, 2):
+    for i in range(0, 16):
+
         task = bjsimple.Task(
             name="my-task-%s" % i,
             executable="/bin/bash",
@@ -69,7 +72,7 @@ if __name__ == "__main__":
                 },
                 {
                     "location" : bjsimple.REMOTE, "mode": bjsimple.COPY, 
-                    "path"     : "/N/u/oweidner/loreipsum_pt2.txt"
+                    "path"     : "/home1/00988/tg802352/loreipsum_pt2.txt"
                 }
             ], 
             output=[

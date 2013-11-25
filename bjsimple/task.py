@@ -5,7 +5,6 @@ import uuid
 COPY            = 'Copy'
 LOCAL           = 'LocalFile'
 REMOTE          = 'RemoteFile'
-
 NEW             = "New"
 PENDING         = "Pending"
 TRANSFER_INPUT  = "TransferInput"
@@ -124,7 +123,9 @@ class Task(object):
         if self._state == new_state:
             return
 
-        for callback in self._cbs:
-            callback(self, self._state, new_state)
+        old_state = self._state
         self._state = new_state
+
+        for callback in self._cbs:
+            callback(self, old_state, new_state)
 

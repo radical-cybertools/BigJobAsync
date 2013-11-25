@@ -31,17 +31,17 @@ RESOURCES = {
 
 # ----------------------------------------------------------------------------
 # MULTIPROCESSING POOL WORKERS
-MAX_WORKERS = 8
+MAX_WORKERS = 4
 
 # ----------------------------------------------------------------------------
 # CONSTANTS
 DEFAULT = 'Default'
 
-NEW     = "New"
-PENDING = "Pending"
-RUNNING = "Running"
-FAILED  = "Failed"
-DONE    = "Done"
+NEW       = "New"
+PENDING   = "Pending"
+RUNNING   = "Running"
+FAILED    = "Failed"
+DONE      = "Done"
 
 
 #-----------------------------------------------------------------------------
@@ -83,23 +83,28 @@ class BigJobThread(threading.Thread):
         while not self.terminate.isSet():
 
             # peridically update bigjob state
-            #if self.sbj_obj.state not in [PENDING, RUNNING]:
-            self._update_bigjob_state(self.sbj_obj)
+            #print "%s -- %s" % ( self.pilotjob.get_state(), self.sbj_obj.state)
+
+            if self.sbj_obj.state in [PENDING, RUNNING]:
+                self._update_bigjob_state(self.sbj_obj)
 
             self.lock.acquire() # FIX -- ineffective lock
 
             for task in self.tasks:
-                if task['task_obj'].state == NEW:
-                    # new task needs to be launched
+                if task['submitted'] == False:
+                    # task needs to be launched
                     self._launch_task(task)
-                elif task['task_obj'].state in [PENDING, RUNNING]:
-                    self._update_task_state(task)
                 else:
-                    # do nothing
-                    pass
+                    # task was already submitted. check state 
+                    if task['task_obj'].state in [PENDING, RUNNING]:
+                        # task is in an active state.
+                        self._update_task_state(task)
+                    else:
+                        # task is in a terminal state. do nothing
+                        pass
 
             self.lock.release()
-            time.sleep(2)
+            time.sleep(1)
 
 
     # ------------------------------------------------------------------------
@@ -118,6 +123,8 @@ class BigJobThread(threading.Thread):
             task['cu_obj'] = cu
 
             task['task_obj']._set_and_propagate_state_change_priv(new_state=PENDING)
+
+            task['submitted'] = True
 
         except Exception, ex:
             task['task_obj']._log.append(str(ex))
@@ -261,13 +268,14 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
     except Exception, ex:
         task._log.append(str(ex))
         task._set_and_propagate_state_change_priv(new_state=FAILED)
-        return -1
+        return task
 
     # Next we can take care of the file transfers
     # Change the state to 'TransferInput'
     task._set_and_propagate_state_change_priv(new_state=TRANSFER_INPUT)
 
     for directive in task._input:
+
         if directive['location'] == LOCAL:
             try: 
                 # we use saga-python to copy a local file to the 
@@ -280,7 +288,7 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
             except Exception, ex:
                 task._log.append(str(ex))
                 task._set_and_propagate_state_change_priv(new_state=FAILED)
-                return -1
+                return task
 
         elif directive['location'] == REMOTE:
             try: 
@@ -290,24 +298,10 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
             except Exception, ex:
                 task._log.append(str(ex))
                 task._set_and_propagate_state_change_priv(new_state=FAILED)
-                return -1
+                return task
 
     task_workdir.close()
     remote_workdir.close()
-
-    # Now that the file transfers have completed, we can create a 
-    # work unit and submit it to the BigJob
-    try:
-        cu_description = pilot.ComputeUnitDescription()
-        cu_description.executable        = task.executable
-        cu_description.arguments         = task.arguments
-        cu_description.working_directory = task.dir_name
-
-        #pilot_job.submit_compute_unit(cu_description)
-    except Exception, ex:
-        task._log.append(str(ex))
-        task._set_and_propagate_state_change_priv(new_state=FAILED)
-        return -1
 
     # Set state to 'Pending'. From here on, BigJob will
     # determine the state of this task.
@@ -315,10 +309,6 @@ def _compute_unit_launcher_worker(remote_work_dir_url, task):
 
     # return the compute unit description
     return task
-
-
-
-
 
 
 
@@ -447,13 +437,12 @@ class BigJobSimple(object):
         for task in tasks:
             # register a callback on the task that will add it to BigJob 
             # once it has reached a pending state
-            result = self.pool.apply_async(_compute_unit_launcher_worker, 
-                (self._remote_workdir_url, task))
-            results.append(result)
+            t = _compute_unit_launcher_worker(self._remote_workdir_url, task)
+            #results.append(result)
 
-        for r in results:
-            task = r.get() ## THIS IS NOT OPTIMAL
-            self.bj_thread.add_tasks(tasks)
+        #for r in results:
+         #   task = r.get() ## THIS IS NOT OPTIMAL
+            self.bj_thread.add_tasks(t)
 
     # ------------------------------------------------------------------------
     #
@@ -464,8 +453,10 @@ class BigJobSimple(object):
         if self._state == new_state:
             return
 
-        for callback in self._cbs:
-            callback(self, self._state, new_state)
+        old_state = self._state
         self._state = new_state
+
+        for callback in self._cbs:
+            callback(self, old_state, new_state)
 
 
