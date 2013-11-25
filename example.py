@@ -17,7 +17,7 @@ def resource_cb(origin, old_state, new_state):
     sys.stderr.write(msg)
 
     if new_state == bjsimple.FAILED:
-        # Print the log and exit if bigjob has failed to run
+        # Print the log and exit if big job has failed
         for entry in origin.log:
             print "   * LOG: %s" % entry
         sys.stderr.write("   * EXITING.\n")
@@ -33,9 +33,8 @@ def task_cb(origin, old_state, new_state):
     sys.stderr.write(msg)
 
     if new_state == bjsimple.FAILED:
-        # Print the log if task has failed to run
-        for entry in origin.log:
-            print "   * LOG: %s" % entry
+        # Print the last log entry if task has failed to run
+        print "   * LOG: %s" % origin.log[-1]
 
 # ----------------------------------------------------------------------------
 #
@@ -86,7 +85,7 @@ if __name__ == "__main__":
         # one the remote cluster and is copied locally into the task's
         # working directory. The resulting output file 'loreipsum.txt' is 
         # copied back to the local machine.
-        combinator = bjsimple.Task(
+        combinator_task = bjsimple.Task(
             name       = "my-task-%s" % i,
             executable = "/bin/bash",
             arguments  = ["-c", "\"/bin/cat loreipsum_pt1.txt loreipsum_pt2.txt >> loreipsum.txt\""
@@ -124,8 +123,8 @@ if __name__ == "__main__":
         #    * DONE            (task successfully finished execution)
         #    * FAILED          (an error occured during transfer or execution)
         #
-        combinator.register_callbacks(task_cb)
-        all_tasks.append(combinator)
+        combinator_task.register_callbacks(task_cb)
+        all_tasks.append(combinator_task)
 
     # Submit all tasks to stampede
     stampede.schedule_tasks(all_tasks)
