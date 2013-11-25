@@ -4,7 +4,7 @@ import bjsimple
 # ----------------------------------------------------------------------------
 #
 def resource_cb(origin, old_state, new_state):
-    """CALLBACK FUNCTION: Writes BigJob state changes to STDERR.
+    """Big job callback function: writes BigJob state changes to STDERR.
 
     It aborts the script script with exit code '-1' if BigJob 
     state is 'FAILED'.
@@ -26,19 +26,22 @@ def resource_cb(origin, old_state, new_state):
 # ----------------------------------------------------------------------------
 #
 def task_cb(origin, old_state, new_state):
-    """CALLBACK FUNCTION: Writes Task state changes to STDERR
+    """Task callback function: writes task state changes to STDERR
     """
     msg = " * Task %s state changed from '%s' to '%s'.\n" % \
         (str(origin), old_state, new_state)
     sys.stderr.write(msg)
 
     if new_state == bjsimple.FAILED:
-        # Print the last log entry if task has failed to run
-        print "   * LOG: %s" % origin.log[-1]
+        # Print the log entry if task has failed to run
+      for entry in origin.log:
+            print "     LOG: %s" % entry
 
 # ----------------------------------------------------------------------------
 #
 if __name__ == "__main__":
+    """The main function.
+    """
 
     # Start a new big job instance on stampede. All parameters a required,
     # except for 'project_id' which is optional. The meaning of the parameters
@@ -55,7 +58,7 @@ if __name__ == "__main__":
     stampede = bjsimple.BigJobSimple(
         name       = "stampede:16cores", 
         resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
-        runtime    = 1, 
+        runtime    = 2, 
         cores      = 16, 
         workdir    = "/scratch/00988/tg802352/example/",
         project_id = "TG-MCB090174"
