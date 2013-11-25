@@ -41,20 +41,41 @@ def task_cb(origin, old_state, new_state):
 #
 if __name__ == "__main__":
 
-    # start a new big job instance on stampede
+    # Start a new big job instance on stampede. All parameters a required,
+    # except for 'project_id' which is optional. The meaning of the parameters
+    # are as follows:
+    #
+    #    * name       - a name for easier identification 
+    #    * resource   - the resource to use. The full resource dictionary 
+    #                   is in 'bigjob_simple.py'. 
+    #    * runtime    - runtime in minutes (a.k.a. wall-clock time)
+    #    * cores      - total number of cores to allocate
+    #    * workdir    - base working directory for all tasks
+    #    * project_id - the project ID to use for billing
+    #
     stampede = bjsimple.BigJobSimple(
-        name       = "stampede:16cores", # give the bigjob instance a name
-        resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], # resource
-        runtime    = 1, # bigjob runtime in minutes (a.k.a. wall-clock time)
-        cores      = 16, # total number of cores to allocate
-        workdir    = "/scratch/00988/tg802352/example/", # working directory
-        project_id = "TG-MCB090174", # project ID to use for billing
+        name       = "stampede:16cores", 
+        resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
+        runtime    = 1, 
+        cores      = 16, 
+        workdir    = "/scratch/00988/tg802352/example/",
+        project_id = "TG-MCB090174"
     )
 
+    # Register a callback function with the big job. This function will get 
+    # called everytime the big job changes its state. Possible states of a 
+    # big job are: 
+    #
+    #    * NEW             (just created)
+    #    * PENDING         (pilot waiting to get scheduled by the system)
+    #    * RUNNING         (pilot executing on the resource)
+    #    * DONE            (pilot successfully finished execution)
+    #    * FAILED          (an error occured during pilot execution)
+    #
     stampede.register_callbacks(resource_cb)
     stampede.allocate()
 
-    # define tasks and their input and output files
+    # Define tasks and their input and output files
     all_tasks = []
 
     for i in range(0, 16):
@@ -71,27 +92,43 @@ if __name__ == "__main__":
             arguments  = ["-c", "\"/bin/cat loreipsum_pt1.txt loreipsum_pt2.txt >> loreipsum.txt\""
             ], 
             input = [
-                {   # RENAME origin -> location
-                    "location" : bjsimple.LOCAL,  "mode": bjsimple.COPY, 
+                { 
+                    "location" : bjsimple.LOCAL, # file is on local machine 
+                    "mode"     : bjsimple.COPY,  # copy it 
                     "path"     : "/Users/oweidner/Work/Data/loreipsum_pt1.txt"
                 },
                 {
-                    "location" : bjsimple.REMOTE, "mode": bjsimple.COPY, 
+                    "location" : bjsimple.REMOTE, # file is already on the remote machine 
+                    "mode"     : bjsimple.COPY,   # ('LINK' will be a future option) 
                     "path"     : "/home1/00988/tg802352/loreipsum_pt2.txt"
                 }
             ], 
             output = [
                 {
+                    # TODO -- doesn't work yet, i.e., output doesn't get copied back
                     "path"        : "loreipsum.txt", 
                     "destination" : "/tmp/loreipsum-%s.txt" % i
                 }
             ]
         )
+
+        # Register a callback function with each task. This function will get 
+        # called everytime the task changes its state. Possible states of a 
+        # task are: 
+        #
+        #    * NEW             (task just created)
+        #    * PENDING         (task waiting to get scheduled)
+        #    * TRANSFER_INPUT  (task transferring input data)
+        #    * RUNNING         (task executing on the resource)
+        #    * TRANSFER_OUTPUT (task transferring output data)
+        #    * DONE            (task successfully finished execution)
+        #    * FAILED          (an error occured during transfer or execution)
+        #
         combinator.register_callbacks(task_cb)
         all_tasks.append(combinator)
 
-    # submit them to stampede
+    # Submit all tasks to stampede
     stampede.schedule_tasks(all_tasks)
     
-    # wait for everything to finish
+    # Wait for the BigJob to finish
     stampede.wait()
