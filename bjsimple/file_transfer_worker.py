@@ -14,6 +14,18 @@ import saga
 # local imports
 from constants import * 
 
+
+# ----------------------------------------------------------------------------
+# 
+def _output_file_transfer_worker(remote_work_dir_url, task):
+    """DOCSTRING
+    """
+    task._set_and_propagate_state_change_priv(new_state=TRANSFER_OUTPUT)
+
+    print "trasnferring...."
+
+    task._set_and_propagate_state_change_priv(new_state=DONE)
+
 # ----------------------------------------------------------------------------
 # 
 def _file_transfer_worker(remote_work_dir_url, task):

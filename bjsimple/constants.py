@@ -10,25 +10,26 @@ __license__   = "MIT"
 
 # ----------------------------------------------------------------------------
 # MULTIPROCESSING POOL DATA TRANSFER WORKERS
-MAX_WORKERS     = 4 # DO NOT CHANGE! 
+MAX_WORKERS               = 4 # DO NOT CHANGE! 
 
 # ----------------------------------------------------------------------------
 # UPDATE INTERVAL OF THE THREAD MAIN LOOP
-UPDATE_INTERVAL = 1
+UPDATE_INTERVAL           = 1
 
 # ----------------------------------------------------------------------------
 # OTHER CONSTANTS
-DEFAULT         = 'Default'
+DEFAULT                   = 'Default'
 
 # ----------------------------------------------------------------------------
 # STATE CONSTANTS
-COPY            = 'Copy'
-LOCAL           = 'LocalFile'
-REMOTE          = 'RemoteFile'
-NEW             = "New"
-PENDING         = "Pending"
-TRANSFER_INPUT  = "TransferInput"
-RUNNING         = "Running"
-TRANSFER_OUTPUT = "TransferOutput"
-FAILED          = "Failed"
-DONE            = "Done"
+COPY                      = 'Copy'
+LOCAL                     = 'LocalFile'
+REMOTE                    = 'RemoteFile'
+NEW                       = "New"
+PENDING                   = "Pending"
+TRANSFER_INPUT            = "TransferInput"
+RUNNING                   = "Running"
+DONE_WAITING_FOR_TRANSFER = "DoneWaitingForTransfer"
+TRANSFER_OUTPUT           = "TransferOutput"
+FAILED                    = "Failed"
+DONE                      = "Done"

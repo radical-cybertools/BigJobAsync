@@ -229,7 +229,7 @@ class _BigJobThread(threading.Thread):
         elif state == 'running':
             translated_state = RUNNING
         elif state == 'done':
-            translated_state = DONE
+            translated_state = DONE_WAITING_FOR_TRANSFER
         else:
             error_msg = "BigJob returned CU state '%s'" % state
             task['task_obj']._log.append(error_msg)

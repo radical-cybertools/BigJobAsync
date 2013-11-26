@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""DOCSTRING
+"""This example shows how to scale a set of tasks across two 
+different resources. 
 """
 
 __author__    = "Ole Weidner"
@@ -53,44 +54,31 @@ if __name__ == "__main__":
     """The main function.
     """
 
-    # Start a new big job instance on stampede. All parameters a required,
-    # except for 'project_id' which is optional. The meaning of the parameters
-    # are as follows:
-    #
-    #    * name       - a name for easier identification 
-    #    * resource   - the resource to use. The full resource dictionary 
-    #                   is in 'resources.py'. 
-    #    * runtime    - runtime in minutes (a.k.a. wall-clock time)
-    #    * cores      - total number of cores to allocate
-    #    * workdir    - base working directory for all tasks
-    #    * project_id - the project ID to use for billing
-    #
-    stampede = bjsimple.BigJobSimple(
-        name       = "stampede:16cores", 
-        resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
+    alamo = bjsimple.BigJobSimple(
+        name       = "alamo:16cores", 
+        resource   = bjsimple.RESOURCES['FUTUREGRID.ALAMO'], 
         runtime    = 20, 
         cores      = 16, 
-        workdir    = "/scratch/00988/tg802352/example/",
-        project_id = "TG-MCB090174"
+        workdir    = "/N/work/oweidner/example/",
     )
+    alamo.register_callbacks(resource_cb)
 
-    # Register a callback function with the big job. This function will get 
-    # called everytime the big job changes its state. Possible states of a 
-    # big job are: 
-    #
-    #    * NEW             (just created)
-    #    * PENDING         (pilot waiting to get scheduled by the system)
-    #    * RUNNING         (pilot executing on the resource)
-    #    * DONE            (pilot successfully finished execution)
-    #    * FAILED          (an error occured during pilot execution)
-    #
-    stampede.register_callbacks(resource_cb)
-    stampede.allocate()
+    india = bjsimple.BigJobSimple(
+        name       = "india:16cores", 
+        resource   = bjsimple.RESOURCES['FUTUREGRID.INDIA'], 
+        runtime    = 20, 
+        cores      = 16, 
+        workdir    = "/N/u/oweidner/example/",
+    )
+    india.register_callbacks(resource_cb)
+
+    india.allocate()
+    alamo.allocate()
 
     # Define tasks and their input and output files
     all_tasks = []
 
-    for i in range(0, 4):
+    for i in range(0, 32):
 
         # A 'combinator' tasks takes two input files and appends one to the 
         # other. The first input file 'loreipsum_pt1.txt' is copied from the
@@ -112,7 +100,7 @@ if __name__ == "__main__":
                 {
                     "location" : bjsimple.REMOTE, # file is already on the remote machine 
                     "mode"     : bjsimple.COPY,   # ('LINK' will be a future option) 
-                    "path"     : "/home1/00988/tg802352/loreipsum_pt2.txt"
+                    "path"     : "/N/u/oweidner/loreipsum_pt2.txt"
                 }
             ], 
             output = [
@@ -123,26 +111,23 @@ if __name__ == "__main__":
                 }
             ]
         )
-
-        # Register a callback function with each task. This function will get 
-        # called everytime the task changes its state. Possible states of a 
-        # task are: 
-        #
-        #    * NEW             (task just created)
-        #    * PENDING         (task waiting to get scheduled)
-        #    * TRANSFER_INPUT  (task transferring input data)
-        #    * RUNNING         (task executing on the resource)
-        #    * TRANSFER_OUTPUT (task transferring output data)
-        #    * DONE            (task successfully finished execution)
-        #    * FAILED          (an error occured during transfer or execution)
-        #
         combinator_task.register_callbacks(task_cb)
         all_tasks.append(combinator_task)
 
-    # Submit all tasks to stampede
-    stampede.schedule_tasks(all_tasks)
+    # Do a simple round-robin task distribution
+    targets = [india, alamo]
+    next = 0
+
+    for task in all_tasks:
+        print "Scheduling %s on %s" % (str(task), str(targets[next]))
+        targets[next].schedule_tasks(task)
+        if next < len(targets)-1:
+            next += 1
+        else:
+            next = 0
     
-    # Wait for the BigJob to finish
-    stampede.wait()
+    # Wait for both BigJobs to finish
+    india.wait()
+    alamo.wait()
 
     sys.exit(0)

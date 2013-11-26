@@ -46,9 +46,10 @@ class Task(object):
         Possible states are:
 
             * PENDING
-            * TRANSFER-INPUT
+            * TRANSFER_INPUT
             * RUNNING
-            * TRANSFER-OUTPUT
+            * DONE_WAITING_FOR_TRANSFER
+            * TRANSFER_OUTPUT
             * DONE 
             * FAILED
         """

@@ -34,6 +34,14 @@ RESOURCES = {
         'jobmgr_url'    : 'pbs+ssh://alamo.futuregrid.org',
         'jobmgr_queue'  : 'short',
         'shared_fs_url' : 'sftp://alamo.futuregrid.org/',
+    },
+
+    'FUTUREGRID.INDIA': {
+        'redis_host'    : 'gw68.quarry.iu.teragrid.org:6379',
+        'redis_pwd'     : 'ILikeBigJob_wITH-REdIS',
+        'jobmgr_url'    : 'pbs+ssh://india.futuregrid.org',
+        'jobmgr_queue'  : 'batch',
+        'shared_fs_url' : 'sftp://india.futuregrid.org/',
     }
 }
     

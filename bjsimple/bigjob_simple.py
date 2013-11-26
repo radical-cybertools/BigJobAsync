@@ -20,6 +20,23 @@ from constants            import *
 from bigjob_thread        import _BigJobThread
 from file_transfer_worker import _file_transfer_worker
 
+# ----------------------------------------------------------------------------
+#
+def file_transfer_output(origin, old_state, new_state):
+    """Big job callback function: writes BigJob state changes to STDERR.
+
+    It aborts the script script with exit code '-1' if BigJob 
+    state is 'FAILED'.
+
+    Obviously, more logic can be built into the callback function, for 
+    example fault tolerance.
+    """ 
+    if new_state == DONE_WAITING_FOR_TRANSFER:
+        origin._set_and_propagate_state_change_priv(new_state=TRANSFER_OUTPUT)
+
+        print "trasnferring...."
+
+        origin._set_and_propagate_state_change_priv(new_state=DONE)
 
 # ----------------------------------------------------------------------------
 #
@@ -146,6 +163,8 @@ class BigJobSimple(object):
         for task in tasks:
             # register a callback on the task that will add it to BigJob 
             # once it has reached a pending state
+
+
             result = self._pool.apply_async(
                 _file_transfer_worker, 
                 (self._remote_workdir_url, task))
@@ -160,6 +179,7 @@ class BigJobSimple(object):
         #       EVERYTHING SEQUENTIALLY.
         for r in results:
             t = r.get()
+            #t.register_callbacks(file_transfer_output)
             self._bj_thread.add_tasks(t)
 
     # ------------------------------------------------------------------------
