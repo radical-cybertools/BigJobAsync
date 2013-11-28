@@ -18,6 +18,8 @@ import multiprocessing
 #
 class _InputTransferWorker(multiprocessing.Process):
 
+    # ------------------------------------------------------------------------
+    #
     def __init__(self, ready_to_transfer_input_q, ready_to_exec_q,
                  done_q, failed_q):
         """DS
@@ -32,11 +34,15 @@ class _InputTransferWorker(multiprocessing.Process):
         self._tasks_ready_to_exec_q = ready_to_exec_q
         self._tasks_ready_to_transfer_input_q = ready_to_transfer_input_q
 
+    # ------------------------------------------------------------------------
+    #
     def stop(self):
         """DS
         """
         self._stop = True
 
+    # ------------------------------------------------------------------------
+    #
     def run(self):
         """DS
         """
@@ -54,7 +60,8 @@ class _InputTransferWorker(multiprocessing.Process):
 
             time.sleep(1)
 
-
+    # ------------------------------------------------------------------------
+    #
     def transfer_input_file(self, task):
         """DOCSTRING
         """

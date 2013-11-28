@@ -128,7 +128,7 @@ if __name__ == "__main__":
                 { 
                     "mode"     : bjsimple.COPY,  # copy it 
                     "path"     : "/Users/oweidner/Work/Data/loreipsum_pt1.txt",
-                    "location" : bjsimple.LOCAL, # file is on local machine 
+                    "location" : bjsimple.LOCAL, # file is on 'this' machine 
 
                 },
                 {
@@ -137,13 +137,12 @@ if __name__ == "__main__":
                     "location" : bjsimple.REMOTE, # file is already on the remote machine 
                 }
             ], 
-            # output = [
-            #     {
-            #         # TODO -- doesn't work yet, i.e., output doesn't get copied back
-            #         "path"        : "loreipsum-%s.txt" % i, 
-            #         "destination" : "." % i
-            #     }
-            # ]
+            output = [
+                {
+                    "path"        : "loreipsum-%s.txt" % i, 
+                    "destination" : "."
+                }
+            ]
         )
 
         # Register a callback function with each task. This function will get 
