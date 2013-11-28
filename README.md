@@ -10,11 +10,12 @@ Installation
 
 This wrapper needs BigJob and SAGA-Python installed:
 
-    virtualenv $HOME/bjenv
-    . $HOME/bjenv/bin/activate
-    pip install saga-python
-    pip install bigjob
-
+```bash
+virtualenv $HOME/bjenv
+source $HOME/bjenv/bin/activate
+pip install saga-python
+pip install bigjob
+```
 
 Running the Example
 -------------------
