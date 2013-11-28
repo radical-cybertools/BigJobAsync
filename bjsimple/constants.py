@@ -9,8 +9,9 @@ __copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 # ----------------------------------------------------------------------------
-# MULTIPROCESSING POOL DATA TRANSFER WORKERS
-MAX_WORKERS               = 4 # DO NOT CHANGE! 
+# MULTIPROCESSING SETTINGS
+MAX_INPUT_TRANSFER_WORKERS  = 4
+MAX_OUTPUT_TRANSFER_WORKERS = 4
 
 # ----------------------------------------------------------------------------
 # UPDATE INTERVAL OF THE THREAD MAIN LOOP
@@ -18,18 +19,23 @@ UPDATE_INTERVAL           = 1
 
 # ----------------------------------------------------------------------------
 # OTHER CONSTANTS
+COPY                      = 'Copy'
+LOCAL                     = 'LocalFile'
+REMOTE                    = 'RemoteFile'
 DEFAULT                   = 'Default'
 
 # ----------------------------------------------------------------------------
 # STATE CONSTANTS
-COPY                      = 'Copy'
-LOCAL                     = 'LocalFile'
-REMOTE                    = 'RemoteFile'
-NEW                       = "New"
-PENDING                   = "Pending"
-TRANSFER_INPUT            = "TransferInput"
-RUNNING                   = "Running"
-DONE_WAITING_FOR_TRANSFER = "DoneWaitingForTransfer"
-TRANSFER_OUTPUT           = "TransferOutput"
-FAILED                    = "Failed"
-DONE                      = "Done"
+
+
+NEW                         = "New"
+PENDING                     = "Pending"
+RUNNING                     = "Running"
+WAITING_FOR_EXECUTION       = "WaitingForExecution"
+WAITING_FOR_INPUT_TRANSFER  = "WaitingForInputTransfer"
+WAITING_FOR_OUTPUT_TRANSFER = "WaitingForOutputTransfer"
+TRANSFERRING_OUTPUT         = "TransferringOutput"
+TRANSFERRING_INPUT          = "TransferringInput"
+
+FAILED                      = "Failed"
+DONE                        = "Done"

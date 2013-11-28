@@ -9,6 +9,7 @@ __copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import sys
+import time
 import bjsimple 
 
 # ----------------------------------------------------------------------------
@@ -65,10 +66,10 @@ if __name__ == "__main__":
     #    * workdir    - base working directory for all tasks
     #    * project_id - the project ID to use for billing
     #
-    stampede = bjsimple.BigJobSimple(
+    stampede = bjsimple.Resource(
         name       = "stampede:16cores", 
         resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
-        runtime    = 20, 
+        runtime    = 2, 
         cores      = 16, 
         workdir    = "/scratch/00988/tg802352/example/",
         project_id = "TG-MCB090174"
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     # Define tasks and their input and output files
     all_tasks = []
 
-    for i in range(0, 4):
+    for i in range(0, 20):
 
         # A 'combinator' tasks takes two input files and appends one to the 
         # other. The first input file 'loreipsum_pt1.txt' is copied from the
@@ -115,13 +116,13 @@ if __name__ == "__main__":
                     "path"     : "/home1/00988/tg802352/loreipsum_pt2.txt"
                 }
             ], 
-            output = [
-                {
-                    # TODO -- doesn't work yet, i.e., output doesn't get copied back
-                    "path"        : "loreipsum.txt", 
-                    "destination" : "/tmp/loreipsum-%s.txt" % i
-                }
-            ]
+            # output = [
+            #     {
+            #         # TODO -- doesn't work yet, i.e., output doesn't get copied back
+            #         "path"        : "loreipsum.txt", 
+            #         "destination" : "/tmp/loreipsum-%s.txt" % i
+            #     }
+            # ]
         )
 
         # Register a callback function with each task. This function will get 
@@ -146,3 +147,4 @@ if __name__ == "__main__":
     stampede.wait()
 
     sys.exit(0)
+

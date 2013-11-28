@@ -35,7 +35,10 @@ class Task(object):
         self._input = input
         self._output = output
 
+        self._waiting_for_output_transfer = False
+
         self._dir_name = "%s__%s" % (self.name, self.uid)
+        self._remote_workdir_url = None
 
     # ------------------------------------------------------------------------
     #
@@ -118,7 +121,23 @@ class Task(object):
     
     # ------------------------------------------------------------------------
     #
-    def _set_and_propagate_state_change_priv(self, new_state):
+    @property
+    def output(self):
+        """Returns the output file directives.
+        """
+        return self._output
+
+   # ------------------------------------------------------------------------
+    #
+    @property
+    def input(self):
+        """Returns the input file directives.
+        """
+        return self._input
+
+    # ------------------------------------------------------------------------
+    #
+    def _set_state(self, new_state):
         """Propagate a state change to all callback functions.
         """
         # do nothing if existing and new state are identical
