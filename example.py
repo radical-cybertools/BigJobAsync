@@ -100,9 +100,11 @@ if __name__ == "__main__":
         # working directory. The resulting output file 'loreipsum.txt' is 
         # copied back to the local machine.
         combinator_task = bjsimple.Task(
-            name       = "my-task-%s" % i,
-            executable = "/bin/bash",
-            arguments  = ["-c", "\"/bin/cat loreipsum_pt1.txt loreipsum_pt2.txt >> loreipsum.txt\""
+            name        = "my-task-%s" % i,
+            cores       = 1,
+            environment = {'OUTPUT_FILENAME': "loreipsum-%s.txt" % i},
+            executable  = "/bin/bash",
+            arguments   = ["-c", "\"/bin/cat loreipsum_pt1.txt loreipsum_pt2.txt >> $OUTPUT_FILENAME\""
             ], 
             input = [
                 { 
@@ -119,8 +121,8 @@ if __name__ == "__main__":
             # output = [
             #     {
             #         # TODO -- doesn't work yet, i.e., output doesn't get copied back
-            #         "path"        : "loreipsum.txt", 
-            #         "destination" : "/tmp/loreipsum-%s.txt" % i
+            #         "path"        : "loreipsum-%s.txt" % i, 
+            #         "destination" : "." % i
             #     }
             # ]
         )

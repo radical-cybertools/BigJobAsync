@@ -17,7 +17,8 @@ class Task(object):
 
     # ------------------------------------------------------------------------
     #
-    def __init__(self, name, executable, arguments, input=[], output=[]):
+    def __init__(self, name, executable, arguments, environment={}, 
+                 input=[], output=[], cores=1):
         """Constructs a new Task object.
         """
         self._uid = uuid.uuid4()
@@ -26,13 +27,13 @@ class Task(object):
         self._log = []
         self._state = NEW
 
-        self._name = name
-        self._executable = executable
-        self._arguments = arguments
-        self._input = input
-        self._output = output
-
-        self._waiting_for_output_transfer = False
+        self._name        = name
+        self._executable  = executable
+        self._arguments   = arguments
+        self._environment = environment
+        self._cores       = cores
+        self._input       = input
+        self._output      = output
 
         self._dir_name = "%s__%s" % (self.name, self.uid)
         self._remote_workdir_url = None
@@ -103,6 +104,14 @@ class Task(object):
     # ------------------------------------------------------------------------
     #
     @property
+    def cores(self):
+        """Returns the number of cores required by the Task.
+        """
+        return self._cores
+
+    # ------------------------------------------------------------------------
+    #
+    @property
     def executable(self):
         """Returns the executable.
         """
@@ -116,6 +125,15 @@ class Task(object):
         """
         return self._arguments
     
+    # ------------------------------------------------------------------------
+    #
+    @property
+    def environment(self):
+        """Returns the executable environment.
+        """
+        return self._environment
+    
+
     # ------------------------------------------------------------------------
     #
     @property

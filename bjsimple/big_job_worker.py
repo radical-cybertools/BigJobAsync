@@ -188,11 +188,13 @@ class _BigJobWorker(multiprocessing.Process):
             wd = "%s/%s" % (self._res_obj['workdir'], task.dir_name)
 
             cu_description = pilot.ComputeUnitDescription()
-            cu_description.executable        = task.executable
-            cu_description.arguments         = task.arguments
-            cu_description.working_directory = wd
-            cu_description.output            = "STDOUT"
-            cu_description.error             = "STDERR"
+            cu_description.executable          = task.executable
+            cu_description.arguments           = task.arguments
+            cu_description.environment         = task.environment
+            cu_description.working_directory   = wd
+            cu_description.number_of_processes = task.cores
+            cu_description.output              = "STDOUT"
+            cu_description.error               = "STDERR"
 
             comp_unit = self._pilot_job.submit_compute_unit(cu_description)
             task._set_state(constants.PENDING)
