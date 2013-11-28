@@ -9,21 +9,21 @@ __copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import sys
-import time
 import bjsimple 
 
 # ----------------------------------------------------------------------------
 #
 def resource_cb(origin, old_state, new_state):
-    """Big job callback function: writes BigJob state changes to STDERR.
+    """Resource callback function: writes resource allocation state 
+    changes to STDERR.
 
-    It aborts the script script with exit code '-1' if BigJob 
-    state is 'FAILED'.
+    It aborts the script script with exit code '-1' if the resource 
+    allocation state is 'FAILED'.
 
-    Obviously, more logic can be built into the callback function, for 
-    example fault tolerance.
+    (Obviously, more logic can be built into the callback function, for 
+    example fault tolerance.)
     """ 
-    msg = " * BigJob '%s' state changed from '%s' to '%s'.\n" % \
+    msg = " * Resource '%s' state changed from '%s' to '%s'.\n" % \
         (str(origin), old_state, new_state)
     sys.stderr.write(msg)
 
@@ -45,26 +45,23 @@ def task_cb(origin, old_state, new_state):
 
     if new_state == bjsimple.FAILED:
         # Print the log entry if task has failed to run
-      for entry in origin.log:
+        for entry in origin.log:
             print "     LOG: %s" % entry
 
 # ----------------------------------------------------------------------------
 #
 if __name__ == "__main__":
-    """The main function.
-    """
-
-    # Start a new big job instance on stampede. All parameters a required,
+    # Get a new resource allocation on stampede. All parameters a required,
     # except for 'project_id' which is optional. The meanings of the arguments
     # are as follows:
     #
-    #    * name       - a name for easier identification 
-    #    * resource   - the resource to use. The full resource dictionary 
+    #    * name         a name for easier identification 
+    #    * resource     the resource to use. The full resource dictionary 
     #                   is in 'resource_dictionary.py'. 
-    #    * runtime    - runtime in minutes (a.k.a. wall-clock time)
-    #    * cores      - total number of cores to allocate
-    #    * workdir    - base working directory for all tasks
-    #    * project_id - the project ID to use for billing
+    #    * runtime      runtime in minutes (a.k.a. wall-clock time)
+    #    * cores        total number of cores to allocate
+    #    * workdir      base working directory for all tasks
+    #    * project_id   the project ID to use for billing
     #
     stampede = bjsimple.Resource(
         name       = "stampede:16cores", 
@@ -75,9 +72,9 @@ if __name__ == "__main__":
         project_id = "TG-MCB090174"
     )
 
-    # Register a callback function with the big job. This function will get 
-    # called everytime the big job changes its state. Possible states of a 
-    # big job are: 
+    # Register a callback function with the resource allocation. This function 
+    # will get called everytime the big job changes its state. Possible states 
+    # of a resource allication are: 
     #
     #    * NEW             (just created)
     #    * PENDING         (pilot waiting to get scheduled by the system)
@@ -100,17 +97,18 @@ if __name__ == "__main__":
         # working directory. The resulting output file is copied back to the 
         # local machine. The meaning of the arguments are as follows: 
         #
-        #    * name        - a name for easier identification 
-        #    * cores       - the number of cores required by this task 
+        #    * name          a name for easier identification 
+        #    * cores         the number of cores required by this task 
         #                    (the default is 1)
-        #    * environment - a dictionary of environment variables to set 
+        #    * environment   a dictionary of environment variables to set 
         #                    in the task's executable environment 
-        #    * executable  - the executable represented by the task
-        #    * arguments   - a list of arguments passed to the executable
-        #    * input       - a list of input file transfer directives (dicts)
-        #    * output      - a list of output file transfer directives (dicts)
+        #    * executable    the executable represented by the task
+        #    * arguments     a list of arguments passed to the executable
+        #    * input         a list of input file transfer directives (dicts)
+        #    * output        a list of output file transfer directives (dicts)
         # 
-        # Each input file transfer directive has the following structure:
+        # Each input file transfer directive dictionary has the 
+        # following structure:
         #    
         #    {
         #        "mode"     : bjsimple.COPY # currently the only 'mode'
@@ -152,13 +150,14 @@ if __name__ == "__main__":
         # called everytime the task changes its state. Possible states of a 
         # task are: 
         #
-        #    * NEW             (task just created)
-        #    * PENDING         (task waiting to get scheduled)
-        #    * TRANSFER_INPUT  (task transferring input data)
-        #    * RUNNING         (task executing on the resource)
-        #    * TRANSFER_OUTPUT (task transferring output data)
-        #    * DONE            (task successfully finished execution)
-        #    * FAILED          (an error occured during transfer or execution)
+        #    * NEW                   (task just created)
+        #    * TRANSFERRING_INPUT    (task transferring input data)
+        #    * WAITING_FOR_EXECUTION (task waiting to get submitted)
+        #    * PENDING               (task submitted, waiting to get executed)
+        #    * RUNNING               (task executing on the resource)
+        #    * TRANSFERRING_OUTPUT   (task transferring output data)
+        #    * DONE                  (task successfully finished execution)
+        #    * FAILED                (error during transfer or execution)
         #
         combinator_task.register_callbacks(task_cb)
         all_tasks.append(combinator_task)
@@ -166,7 +165,7 @@ if __name__ == "__main__":
     # Submit all tasks to stampede
     stampede.schedule_tasks(all_tasks)
     
-    # Wait for the BigJob to finish
+    # Wait for the Resource allocation to finish
     stampede.wait()
 
     sys.exit(0)
