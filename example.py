@@ -55,12 +55,12 @@ if __name__ == "__main__":
     """
 
     # Start a new big job instance on stampede. All parameters a required,
-    # except for 'project_id' which is optional. The meaning of the parameters
+    # except for 'project_id' which is optional. The meanings of the arguments
     # are as follows:
     #
     #    * name       - a name for easier identification 
     #    * resource   - the resource to use. The full resource dictionary 
-    #                   is in 'resources.py'. 
+    #                   is in 'resource_dictionary.py'. 
     #    * runtime    - runtime in minutes (a.k.a. wall-clock time)
     #    * cores      - total number of cores to allocate
     #    * workdir    - base working directory for all tasks
@@ -97,10 +97,30 @@ if __name__ == "__main__":
         # other. The first input file 'loreipsum_pt1.txt' is copied from the
         # local machine to the executing cluster. The second file is already 
         # one the remote cluster and is copied locally into the task's
-        # working directory. The resulting output file 'loreipsum.txt' is 
-        # copied back to the local machine.
+        # working directory. The resulting output file is copied back to the 
+        # local machine. The meaning of the arguments are as follows: 
+        #
+        #    * name        - a name for easier identification 
+        #    * cores       - the number of cores required by this task 
+        #                    (the default is 1)
+        #    * environment - a dictionary of environment variables to set 
+        #                    in the task's executable environment 
+        #    * executable  - the executable represented by the task
+        #    * arguments   - a list of arguments passed to the executable
+        #    * input       - a list of input file transfer directives (dicts)
+        #    * output      - a list of output file transfer directives (dicts)
+        # 
+        # Each input file transfer directive has the following structure:
+        #    
+        #    {
+        #        "mode"     : bjsimple.COPY # currently the only 'mode'
+        #        "path"     : path of the input file to copy 
+        #        "location" : either bjsimple.LOCAL (on 'this' machine) or 
+        #                     bjsimple.REMOTE (on the remote/executing machine)
+        #    }
+        #
         combinator_task = bjsimple.Task(
-            name        = "my-task-%s" % i,
+            name        = "combinator-task-%s" % i,
             cores       = 1,
             environment = {'OUTPUT_FILENAME': "loreipsum-%s.txt" % i},
             executable  = "/bin/bash",
@@ -108,14 +128,15 @@ if __name__ == "__main__":
             ], 
             input = [
                 { 
-                    "location" : bjsimple.LOCAL, # file is on local machine 
                     "mode"     : bjsimple.COPY,  # copy it 
-                    "path"     : "/Users/oweidner/Work/Data/loreipsum_pt1.txt"
+                    "path"     : "/Users/oweidner/Work/Data/loreipsum_pt1.txt",
+                    "location" : bjsimple.LOCAL, # file is on local machine 
+
                 },
                 {
-                    "location" : bjsimple.REMOTE, # file is already on the remote machine 
                     "mode"     : bjsimple.COPY,   # ('LINK' will be a future option) 
-                    "path"     : "/home1/00988/tg802352/loreipsum_pt2.txt"
+                    "path"     : "/home1/00988/tg802352/loreipsum_pt2.txt",
+                    "location" : bjsimple.REMOTE, # file is already on the remote machine 
                 }
             ], 
             # output = [
