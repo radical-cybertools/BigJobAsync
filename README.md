@@ -28,3 +28,19 @@ and change the following lines:
 Now you can run the example:
 
     python example.py
+
+Resources
+---------
+
+Resource configurations are defined in https://github.com/oleweidner/BigJobSimple/blob/master/bjsimple/resource_dictionary.py.
+
+You reference a resource configuration via the `resource` parameter in the `Resource` class constructor:
+
+```python
+stampede = bjsimple.Resource(
+    resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
+```
+
+All resource configuration define a default queue on the remote system. You can override it by setting the  `queue` parameter explicitly in the `Resource` class constructor.
+
+If you want to add a new resource, just add it to the `resource_dictionary.py` file.
