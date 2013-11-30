@@ -43,5 +43,13 @@ RESOURCES = {
         'jobmgr_queue'  : 'batch',
         'shared_fs_url' : 'sftp://india.futuregrid.org/',
     }
+
+    'FUTUREGRID.SIERRA': {
+        'redis_host'    : 'gw68.quarry.iu.teragrid.org:6379',
+        'redis_pwd'     : 'ILikeBigJob_wITH-REdIS',
+        'jobmgr_url'    : 'pbs+ssh://sierra.futuregrid.org',
+        'jobmgr_queue'  : 'batch',
+        'shared_fs_url' : 'sftp://sirra.futuregrid.org/',
+    }
 }
     
