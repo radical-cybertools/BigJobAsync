@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     # Register a callback function with the resource allocation. This function 
     # will get called everytime the big job changes its state. Possible states 
-    # of a resource allication are: 
+    # of a resource allocation are: 
     #
     #    * NEW             (just created)
     #    * PENDING         (pilot waiting to get scheduled by the system)

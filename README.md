@@ -30,7 +30,7 @@ Running the example is pretty straight forward. Edit the `example.py` file
 and change the following settings:
 
 * base working directory: https://github.com/oleweidner/BigJobSimple/blob/master/example.py#L71
-* project / allication id: https://github.com/oleweidner/BigJobSimple/blob/master/example.py#L72
+* project / allocation id: https://github.com/oleweidner/BigJobSimple/blob/master/example.py#L72
 
 Put the input files somewhere and adjust the input transfer directives:
 
