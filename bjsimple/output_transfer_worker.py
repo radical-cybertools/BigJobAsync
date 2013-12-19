@@ -71,11 +71,11 @@ class _OutputTransferWorker(multiprocessing.Process):
         # input data has been staged. 
         try:
             # create working directories for tasks based on the task uid
-            task_workdir_url = "%s/%s" % (task._remote_workdir_url, task.dir_name)
-            task._log.append("Creating working directory '%s'" % task.dir_name)
 
-            task_workdir = saga.filesystem.Directory(task_workdir_url, 
-                saga.filesystem.CREATE_PARENTS)
+            task_workdir_url = saga.Url("%s/%s" % (task._remote_workdir_url, task.dir_name))
+            task_workdir_url.path = os.path.abspath(task_workdir_url.path)
+
+            task_workdir = saga.filesystem.Directory(task_workdir_url)
 
         except Exception, ex:
             task._log.append(str(ex))
@@ -87,7 +87,8 @@ class _OutputTransferWorker(multiprocessing.Process):
         for directive in task.output:
 
             try: 
-                task._log.append("Copying output file '%s'" % directive['path'])
+                output_file_url = "%s/%s" % (task_workdir_url, directive['path'])
+                task._log.append("Copying output file %s" % output_file_url)
                 
                 if directive['destination'] == '.':
                     local_path = os.getcwd()
@@ -95,7 +96,7 @@ class _OutputTransferWorker(multiprocessing.Process):
                     local_path = directive['destination']
 
                 local_filename = "file://localhost//%s" % local_path
-                task_workdir.copy(directive['path'], local_filename)
+                task_workdir.copy(output_file_url, local_filename)
 
             except Exception, ex:
                 task._log.append(str(ex))
