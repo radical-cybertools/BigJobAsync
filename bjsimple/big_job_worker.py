@@ -244,6 +244,10 @@ class _BigJobWorker(multiprocessing.Process):
             url.path = self._res_obj['workdir']
             pilot_description.working_directory   = url.path
 
+
+            if 'spmd_variation' in self._res_obj['resource']:
+                pilot_description.spmd_variation = self._res_obj['resource']['spmd_variation']
+
             # Connect to REDIS, create Pilot Compute Service
             redis_url = "redis://%s@%s" % (
                 self._res_obj['resource']['redis_pwd'], 

@@ -26,6 +26,7 @@ RESOURCES = {
         'jobmgr_url'    : 'sge+ssh://lonestar.tacc.utexas.edu',
         'jobmgr_queue'  : 'normal',
         'shared_fs_url' : 'sftp://lonestar.tacc.utexas.edu/',
+        'spmd_variation': '12way'
     },
 
     'FUTUREGRID.ALAMO': {
