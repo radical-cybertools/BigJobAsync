@@ -17,7 +17,7 @@ class Task(object):
 
     # ------------------------------------------------------------------------
     #
-    def __init__(self, name, executable, arguments, environment={}, 
+    def __init__(self, name, executable, arguments=[], environment={}, 
                  input=[], output=[], cores=1):
         """Constructs a new Task object.
         """

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-"""DOCSTRING
+"""This example illustrates how to submit N tasks to 
+a remote resource, including input and output file transfer.
+
+Inline comments explain specific components of the code. 
 """
 
 __author__    = "Ole Weidner"
@@ -10,6 +13,9 @@ __license__   = "MIT"
 
 import sys
 import bjsimple 
+
+# Number of tasks to run
+N = 32
 
 # ----------------------------------------------------------------------------
 #
@@ -88,7 +94,7 @@ if __name__ == "__main__":
     # Define tasks and their input and output files
     all_tasks = []
 
-    for i in range(0, 20):
+    for i in range(0, N):
 
         # A 'combinator' tasks takes two input files and appends one to the 
         # other. The first input file 'loreipsum_pt1.txt' is copied from the
@@ -126,21 +132,29 @@ if __name__ == "__main__":
             ], 
             input = [
                 { 
-                    "mode"     : bjsimple.COPY,  # copy it 
-                    "path"     : "/Users/oweidner/Work/Data/loreipsum_pt1.txt",
-                    "location" : bjsimple.LOCAL, # file is on 'this' machine 
-
+                    # transfer an input file from the local machine (i.e., the machine
+                    # where this script runs) into the task's workspace on the 
+                    # remote machine.
+                    "mode"        : bjsimple.COPY,
+                    "origin"      : bjsimple.LOCAL,
+                    "origin_path" : "/Users/oweidner/Work/Data/loreipsum_pt1.txt",
                 },
                 {
-                    "mode"     : bjsimple.COPY,   # ('LINK' will be a future option) 
-                    "path"     : "/home1/00988/tg802352/loreipsum_pt2.txt",
-                    "location" : bjsimple.REMOTE, # file is already on the remote machine 
+                    # copy an input file that is already in on the remote machine 
+                    # into the task's workspace.
+                    "mode"        : bjsimple.COPY, 
+                    "origin"      : bjsimple.REMOTE, 
+                    "origin_path" : "/home1/00988/tg802352/loreipsum_pt2.txt",
                 }
             ], 
             output = [
                 {
-                    "path"        : "loreipsum-%s.txt" % i, 
-                    "destination" : "."
+                    # transfer the task's output file ('STDOUT') back to the local machine 
+                    # (i.e., the machine where this script runs).
+                    "mode"             : bjsimple.COPY, 
+                    "origin_path"      : "loreipsum-%s.txt" % i,      
+                    "destination"      : bjsimple.LOCAL,
+                    "destination_path" : "."
                 }
             ]
         )
@@ -164,7 +178,7 @@ if __name__ == "__main__":
     # Submit all tasks to stampede
     stampede.schedule_tasks(all_tasks)
     
-    # Wait for the Resource allocation to finish
+    # Wait for the Resource allocation to finish, i.e., run out of wall time
     stampede.wait()
 
     sys.exit(0)

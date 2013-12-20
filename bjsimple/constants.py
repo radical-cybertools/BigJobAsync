@@ -19,6 +19,7 @@ UPDATE_INTERVAL           = 1
 
 # ----------------------------------------------------------------------------
 # OTHER CONSTANTS
+LINK                      = 'Link'
 COPY                      = 'Copy'
 LOCAL                     = 'LocalFile'
 REMOTE                    = 'RemoteFile'

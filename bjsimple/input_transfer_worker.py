@@ -14,6 +14,8 @@ import Queue
 import constants
 import multiprocessing
 
+from task import Task
+
 # ----------------------------------------------------------------------------
 #
 class _InputTransferWorker(multiprocessing.Process):
@@ -87,12 +89,15 @@ class _InputTransferWorker(multiprocessing.Process):
         # Next we can take care of the file transfers
         for directive in task.input:
 
-            if directive['location'] == constants.LOCAL:
+            origin      = directive['origin']
+            origin_path = directive['origin_path']
+
+            if origin == constants.LOCAL:
                 try: 
                     # we use saga-python to copy a local file to the 
                     # remote destination
-                    task._log.append("Copying LOCAL input file '%s'" % directive['path'])
-                    local_filename = "file://localhost//%s" % directive['path']
+                    task._log.append("Copying LOCAL input file '%s'" % origin_path)
+                    local_filename = "file://localhost//%s" % origin_path
                     local_file = saga.filesystem.File(local_filename)
                     local_file.copy(task_workdir_url)
                     local_file.close()
@@ -102,16 +107,30 @@ class _InputTransferWorker(multiprocessing.Process):
                     self._tasks_failed_q.put(task)
                     return 
 
-            elif directive['location'] == constants.REMOTE:
+            elif origin == constants.REMOTE:
                 try: 
                     # copy around stuff locally on the remote machine
-                    task._log.append("Copying REMOTE input file '%s'" % directive['path'])
-                    task_workdir.copy(directive['path'], ".")
+                    task._log.append("Copying REMOTE input file '%s'" % origin_path)
+                    task_workdir.copy(origin_path, ".")
                 except Exception, ex:
                     task._log.append(str(ex))
                     task._set_state(constants.FAILED)
                     self._tasks_failed_q.put(task)
                     return
+
+            elif isinstance(origin, Task):
+                try: 
+                    print "linkage required: %s -> %s " % origin._dir_name
+                except Exception, ex:
+                    task._log.append(str(ex))
+                    task._set_state(constants.FAILED)
+                    self._tasks_failed_q.put(task)
+                    return
+
+            else:
+                raise Exception("Invalid paramater for input file origin: %s" % origin)
+
+
         try:
             task_workdir.close()
         except Exception, ex:

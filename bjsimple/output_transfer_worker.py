@@ -86,17 +86,34 @@ class _OutputTransferWorker(multiprocessing.Process):
                 # Next we can take care of the file transfers
         for directive in task.output:
 
-            try: 
-                output_file_url = "%s/%s" % (task_workdir_url, directive['path'])
-                task._log.append("Copying output file %s" % output_file_url)
-                
-                if directive['destination'] == '.':
-                    local_path = os.getcwd()
-                else:
-                    local_path = directive['destination']
+            origin_path      = directive['origin_path']
+            destination      = directive['destination']
+            destination_path = directive['destination_path']
 
-                local_filename = "file://localhost//%s" % local_path
-                task_workdir.copy(output_file_url, local_filename)
+            try: 
+                output_file_url = "%s/%s" % (task_workdir_url, origin_path)
+                
+                if destination == constants.LOCAL:
+                    # copying REMOTE -> LOCAL
+                    if destination_path == '.':
+                        local_path = os.getcwd()
+                    else:
+                        if destination_path.startswith("/") is False:
+                            local_path = "%s/%s" % (os.getcwd(), destination)
+                        else:
+                            local_path = destination_path
+
+                    local_filename = "file://localhost//%s" % local_path
+                    task_workdir.copy(output_file_url, local_filename)
+                    task._log.append("Copying output file %s to %s" % (output_file_url, local_filename))
+
+                elif destination == constants.REMOTE:
+                    # copying REMOTE -> REMOTE                    
+                    task_workdir.copy(output_file_url, destination_path)
+                    task._log.append("Copying output file %s to %s" % (output_file_url, destination_path))
+
+                else:
+                    raise Exception("Invalid paramater for output file destination: %s" % destination)
 
             except Exception, ex:
                 task._log.append(str(ex))
