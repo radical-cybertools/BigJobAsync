@@ -12,6 +12,7 @@ import saga
 import time
 import Queue
 import constants
+import subprocess
 import multiprocessing
 
 from task import Task
@@ -110,7 +111,6 @@ class _InputTransferWorker(multiprocessing.Process):
             elif origin == constants.REMOTE:
                 try: 
                     # copy around stuff locally on the remote machine
-                    task._log.append("Copying REMOTE input file '%s'" % origin_path)
                     task_workdir.copy(origin_path, ".")
                 except Exception, ex:
                     task._log.append(str(ex))
@@ -120,7 +120,33 @@ class _InputTransferWorker(multiprocessing.Process):
 
             elif isinstance(origin, Task):
                 try: 
-                    print "linkage required: %s -> %s " % origin._dir_name
+                    # this is a hack / workaround until SAGA-Python supports 
+                    # linking files.
+
+                    link_host   = saga.Url(task_workdir_url).host
+                    link_port   = saga.Url(task_workdir_url).port
+                    link_user   = saga.Url(task_workdir_url).username
+
+                    link_source = "%s/%s/%s" % (saga.Url(origin._remote_workdir_url).path, origin._dir_name, origin_path)
+                    link_target = "%s/%s" % (saga.Url(task_workdir_url).path, origin_path)
+
+                    link_cmd = "/bin/bash -c \"echo -e 'symlink %s %s' | sftp %s\"" % (link_source, link_target, link_host)
+                    task._log.append("Linking input file: %s" % (link_cmd))
+
+                    process = subprocess.Popen(link_cmd, shell=True,
+                                               stdout=subprocess.PIPE, 
+                                               stderr=subprocess.PIPE)
+
+                    # wait for the process to terminate
+                    out, err = process.communicate()
+                    errcode = process.returncode
+
+                    if errcode != 0:
+                        task._log.append("Linking FAILED: %s" % str(err))
+                        task._set_state(constants.FAILED)
+                        self._tasks_failed_q.put(task)
+                        return 
+
                 except Exception, ex:
                     task._log.append(str(ex))
                     task._set_state(constants.FAILED)
