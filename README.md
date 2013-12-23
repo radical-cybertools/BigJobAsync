@@ -5,43 +5,29 @@ Asynchronous wrapper around BigJob that implements transparent file transfers
 and makes heavy use of callbacks and multiprocessing to speed up transfers in
 the background.
 
+Requirements
+------------
+
+* Python >= 2.5
 
 Installation
 ------------
 
-This wrapper needs BigJob and SAGA-Python installed:
+BigJobAsync can be installed with pip directly from GitHub:
 
 ```bash
-virtualenv $HOME/bjenv
-source $HOME/bjenv/bin/activate
-pip install saga-python
-pip install bigjob
+virtualenv $HOME/bjaenv
+source $HOME/bjaenv/bin/activate
+pip install --upgrade -e git://github.com/oleweidner/BigJobAsync.git@devel#egg=bigjobasync
 ```
 
-Next, check out the `BigJobSimple` repository:
+The installer automatically installed the latest versions of SAGA-Python (http://saga-project.github.io/saga-python/)
+and BigJob (http://saga-project.github.io/BigJob/).
 
-```bash
-git clone https://github.com/oleweidner/BigJobSimple.git
-```
+Running the Examples
+--------------------
 
-Running the Example
--------------------
-
-Running the example is pretty straight forward. Edit the `example.py` file 
-and change the following settings:
-
-* base working directory: https://github.com/oleweidner/BigJobSimple/blob/master/example.py#L71
-* project / allocation id: https://github.com/oleweidner/BigJobSimple/blob/master/example.py#L72
-
-Put the input files somewhere and adjust the input transfer directives:
-
-* https://github.com/oleweidner/BigJobSimple/blob/master/example.py#L130
-* https://github.com/oleweidner/BigJobSimple/blob/master/example.py#L136
-
-NOTE: You can find copies of the input files here:
-
-* https://gist.github.com/oleweidner/7711750
-* https://gist.github.com/oleweidner/7711766
+The examples are in the 'examples' directory (https://github.com/oleweidner/BigJobAsync/blob/master/examples/).
     
 Now you can run the example:
 
@@ -52,13 +38,14 @@ Resources
 
 Resource configurations are defined in https://github.com/oleweidner/BigJobSimple/blob/master/bjsimple/resource_dictionary.py.
 
-You reference a resource configuration via the `resource` parameter in the `Resource` class constructor:
+You reference a resource configuration via the `resource` parameter in the
+`Resource` class constructor:
 
 ```python
 stampede = bjsimple.Resource(
     resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
 ```
 
-All resource configuration define a default queue on the remote system. You can override it by setting the  `queue` parameter explicitly in the `Resource` class constructor.
-
-If you want to add a new resource, just add it to the `resource_dictionary.py` file.
+All resource configuration define a default queue on the remote system. You
+can override it by setting the  `queue` parameter explicitly in the `Resource`
+class constructor.
