@@ -33,7 +33,7 @@ def resource_cb(origin, old_state, new_state):
         (str(origin), old_state, new_state)
     sys.stderr.write(msg)
 
-    if new_state == bjsimple.FAILED:
+    if new_state == bigjobasync.FAILED:
         # Print the log and exit if big job has failed
         for entry in origin.log:
             print "   * LOG: %s" % entry
@@ -50,7 +50,7 @@ def task_cb(origin, old_state, new_state):
         (str(origin), old_state, new_state)
     sys.stderr.write(msg)
 
-    if new_state == bjsimple.FAILED:
+    if new_state == bigjobasync.FAILED:
         # Print the log entry if task has failed to run
         for entry in origin.log:
             print "     LOG: %s" % entry
@@ -60,9 +60,9 @@ def task_cb(origin, old_state, new_state):
 #
 if __name__ == "__main__":
 
-    stampede = bjsimple.Resource(
+    stampede = bigjobasync.Resource(
         name       = "stampede:16cores", 
-        resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
+        resource   = bigjobasync.RESOURCES['XSEDE.STAMPEDE'], 
         username   = "tg802352",
         runtime    = 2, 
         cores      = 16, 
@@ -78,14 +78,14 @@ if __name__ == "__main__":
 
     # The first task is a 'dummy' task that just transfers the 
     # input file that is shared between all other tasks
-    data_staging_task = bjsimple.Task(
+    data_staging_task = bigjobasync.Task(
         name          = "data-staging-task",
         cores         = 1,
         executable    = "/bin/true",
         input = [
             {
-                "mode"        : bjsimple.COPY,
-                "origin"      : bjsimple.LOCAL,
+                "mode"        : bigjobasync.COPY,
+                "origin"      : bigjobasync.LOCAL,
                 "origin_path" : "/Users/oweidner/Work/Data/sharedinput.txt",
             }
         ] 
@@ -96,28 +96,28 @@ if __name__ == "__main__":
     # Now we define the compute tasks that use the shared input data.
     for i in range(0, N):
 
-        combinator_task = bjsimple.Task(
+        combinator_task = bigjobasync.Task(
             name        = "combinator-task-%s" % i,
             cores       = 1,
             executable  = "/bin/bash",
             arguments   = ["-c", "\"/bin/cat sharedinput.txt loreipsum_pt2.txt >> STDOUT\""], 
             input = [
                 {
-                    "mode"        : bjsimple.LINK,  # create a symbolic link to the shared input file
+                    "mode"        : bigjobasync.LINK,  # create a symbolic link to the shared input file
                     "origin"      : data_staging_task, # file is 'part' of a different task 
                     "origin_path" : "sharedinput.txt"
                 },
                 {
-                    "mode"        : bjsimple.COPY,    
-                    "origin"      : bjsimple.REMOTE,  
+                    "mode"        : bigjobasync.COPY,    
+                    "origin"      : bigjobasync.REMOTE,  
                     "origin_path" : "/home1/00988/tg802352/loreipsum_pt2.txt",
                 }
             ], 
             output = [
                 {
-                    "mode"             : bjsimple.COPY, 
+                    "mode"             : bigjobasync.COPY, 
                     "origin_path"      : "STDOUT",         
-                    "destination"      : bjsimple.LOCAL,        
+                    "destination"      : bigjobasync.LOCAL,        
                     "destination_path" : "STDOUT-from-task-%s" % i 
                 }
             ]

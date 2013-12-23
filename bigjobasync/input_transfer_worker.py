@@ -125,12 +125,12 @@ class _InputTransferWorker(multiprocessing.Process):
 
                     sftp_host   = saga.Url(task_workdir_url).host
                     sftp_port   = saga.Url(task_workdir_url).port
-                    sft_user   = saga.Url(task_workdir_url).username
+                    sftp_user   = saga.Url(task_workdir_url).username
 
                     link_source = "%s/%s/%s" % (saga.Url(origin._remote_workdir_url).path, origin._dir_name, origin_path)
                     link_target = "%s/%s" % (saga.Url(task_workdir_url).path, origin_path)
 
-                    if sft_user is not None:
+                    if sftp_user is not None:
                         link_cmd = "/bin/bash -c \"echo -e 'symlink %s %s' | sftp %s@%s\"" % (link_source, link_target, sftp_user, sftp_host)
                     else:
                         link_cmd = "/bin/bash -c \"echo -e 'symlink %s %s' | sftp %s\"" % (link_source, link_target, sftp_host)

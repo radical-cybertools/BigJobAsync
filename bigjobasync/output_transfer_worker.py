@@ -107,8 +107,6 @@ class _OutputTransferWorker(multiprocessing.Process):
                     task_workdir.copy(output_file_url, local_filename)
                     task._log.append("Copying output file %s to %s" % (output_file_url, local_filename))
 
-                    print "Copying output file %s to %s" % (output_file_url, local_filename)
-
                 elif destination == constants.REMOTE:
                     # copying REMOTE -> REMOTE                    
                     task_workdir.copy(output_file_url, destination_path)
