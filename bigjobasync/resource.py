@@ -49,8 +49,13 @@ class Resource(threading.Thread):
         self._resource_obj['cores']              = cores
         self._resource_obj['project_id']         = project_id
         self._resource_obj['queue']              = queue
-        self._resource_obj['remote_workdir_url'] = "%s/%s/" % \
-         (resource['shared_fs_url'], workdir)
+
+        # inject username into remote_workdir_url
+        remote_workdir_url = saga.Url("%s/%s/" % (resource['shared_fs_url'], workdir))
+        if username is not None:
+            remote_workdir_url.set_username(username)
+        remote_workdir_url = str(remote_workdir_url)
+        self._resource_obj['remote_workdir_url'] = remote_workdir_url
 
         self._ready_to_transfer_input_queue = multiprocessing.Queue()
         self._ready_to_execute_queue = multiprocessing.Queue()

@@ -220,11 +220,6 @@ class _BigJobWorker(multiprocessing.Process):
         try: 
             # Try to create the working directory. If This fails, we set 
             # our state to 'Failed'.
-            remote_workdir_url = saga.Url(self._res_obj['remote_workdir_url'])
-            if self._res_obj['username'] is not None:
-                remote_workdir_url.set_username(self._res_obj['username'] )
-            remote_workdir_url = str(remote_workdir_url)
-
             d = saga.filesystem.Directory(remote_workdir_url, saga.filesystem.CREATE_PARENTS)
             d.close()
         except Exception, ex:
