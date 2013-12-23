@@ -57,6 +57,7 @@ class Resource(threading.Thread):
         remote_workdir_url = str(remote_workdir_url)
         self._resource_obj['remote_workdir_url'] = remote_workdir_url
 
+
         self._ready_to_transfer_input_queue = multiprocessing.Queue()
         self._ready_to_execute_queue = multiprocessing.Queue()
         self._ready_to_transfer_output_queue = multiprocessing.Queue()

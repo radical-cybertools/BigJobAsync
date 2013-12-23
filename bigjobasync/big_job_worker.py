@@ -220,7 +220,7 @@ class _BigJobWorker(multiprocessing.Process):
         try: 
             # Try to create the working directory. If This fails, we set 
             # our state to 'Failed'.
-            d = saga.filesystem.Directory(remote_workdir_url, saga.filesystem.CREATE_PARENTS)
+            d = saga.filesystem.Directory(self._res_obj['remote_workdir_url'], saga.filesystem.CREATE_PARENTS)
             d.close()
         except Exception, ex:
             self._res_obj['log'].append(str(ex))

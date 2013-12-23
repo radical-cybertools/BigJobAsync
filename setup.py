@@ -121,7 +121,7 @@ setup_args = {
         'Operating System     :: POSIX',
         'Operating System     :: Unix'
     ],
-    'packages'    : find_packages('bigjobasync'),    
+    'packages'         : ["bigjobasync"], 
     'package_data'     : {'': ['*.sh', 'VERSION', ]},
     #'test_suite'       : 'sinon.tests',
     'install_requires' : ['setuptools',
