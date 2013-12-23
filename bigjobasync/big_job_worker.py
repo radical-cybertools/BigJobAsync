@@ -220,8 +220,12 @@ class _BigJobWorker(multiprocessing.Process):
         try: 
             # Try to create the working directory. If This fails, we set 
             # our state to 'Failed'.
-            d = saga.filesystem.Directory(self._res_obj['remote_workdir_url'], 
-                saga.filesystem.CREATE_PARENTS)
+            remote_workdir_url = saga.Url(self._res_obj['remote_workdir_url'])
+            if self._res_obj['username'] is not None:
+                remote_workdir_url.set_username(self._res_obj['username'] )
+            remote_workdir_url = str(remote_workdir_url)
+
+            d = saga.filesystem.Directory(remote_workdir_url, saga.filesystem.CREATE_PARENTS)
             d.close()
         except Exception, ex:
             self._res_obj['log'].append(str(ex))
@@ -231,7 +235,14 @@ class _BigJobWorker(multiprocessing.Process):
         try:
             # Create pilot description & launch the BigJob
             pilot_description = pilot.PilotComputeDescription()
-            pilot_description.service_url         = self._res_obj['resource']['jobmgr_url']
+
+            # we construct a service url as username@host
+            service_url = saga.Url(self._res_obj['resource']['jobmgr_url'])
+            if self._res_obj['username'] is not None:
+                service_url.set_username(self._res_obj['username'] )
+            service_url = str(service_url)
+
+            pilot_description.service_url         = service_url
             pilot_description.number_of_processes = self._res_obj['cores']
             pilot_description.walltime            = self._res_obj['runtime']
             if self._res_obj['project_id'] is not None:

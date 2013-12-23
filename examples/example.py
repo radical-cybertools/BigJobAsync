@@ -12,7 +12,7 @@ __copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import sys
-import bjsimple 
+import bigjobasync 
 
 # Number of tasks to run
 N = 32
@@ -33,7 +33,7 @@ def resource_cb(origin, old_state, new_state):
         (str(origin), old_state, new_state)
     sys.stderr.write(msg)
 
-    if new_state == bjsimple.FAILED:
+    if new_state == bigjobasync.FAILED:
         # Print the log and exit if big job has failed
         for entry in origin.log:
             print "   * LOG: %s" % entry
@@ -49,7 +49,7 @@ def task_cb(origin, old_state, new_state):
         (str(origin), old_state, new_state)
     sys.stderr.write(msg)
 
-    if new_state == bjsimple.FAILED:
+    if new_state == bigjobasync.FAILED:
         # Print the log entry if task has failed to run
         for entry in origin.log:
             print "     LOG: %s" % entry
@@ -69,9 +69,10 @@ if __name__ == "__main__":
     #    * workdir      base working directory for all tasks
     #    * project_id   the project ID to use for billing
     #
-    stampede = bjsimple.Resource(
+    stampede = bigjobasync.Resource(
         name       = "stampede:16cores", 
-        resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
+        resource   = bigjobasync.RESOURCES['XSEDE.STAMPEDE'],
+        username   = "tg802352",
         runtime    = 2, 
         cores      = 16, 
         workdir    = "/scratch/00988/tg802352/example/",
@@ -123,7 +124,7 @@ if __name__ == "__main__":
         #                     bjsimple.REMOTE (on the remote/executing machine)
         #    }
         #
-        combinator_task = bjsimple.Task(
+        combinator_task = bigjobasync.Task(
             name        = "combinator-task-%s" % i,
             cores       = 1,
             environment = {'OUTPUT_FILENAME': "loreipsum-%s.txt" % i},
@@ -135,15 +136,15 @@ if __name__ == "__main__":
                     # transfer an input file from the local machine (i.e., the machine
                     # where this script runs) into the task's workspace on the 
                     # remote machine.
-                    "mode"        : bjsimple.COPY,
-                    "origin"      : bjsimple.LOCAL,
+                    "mode"        : bigjobasync.COPY,
+                    "origin"      : bigjobasync.LOCAL,
                     "origin_path" : "/Users/oweidner/Work/Data/loreipsum_pt1.txt",
                 },
                 {
                     # copy an input file that is already in on the remote machine 
                     # into the task's workspace.
-                    "mode"        : bjsimple.COPY, 
-                    "origin"      : bjsimple.REMOTE, 
+                    "mode"        : bigjobasync.COPY, 
+                    "origin"      : bigjobasync.REMOTE, 
                     "origin_path" : "/home1/00988/tg802352/loreipsum_pt2.txt",
                 }
             ], 
@@ -151,9 +152,9 @@ if __name__ == "__main__":
                 {
                     # transfer the task's output file ('STDOUT') back to the local machine 
                     # (i.e., the machine where this script runs).
-                    "mode"             : bjsimple.COPY, 
+                    "mode"             : bigjobasync.COPY, 
                     "origin_path"      : "loreipsum-%s.txt" % i,      
-                    "destination"      : bjsimple.LOCAL,
+                    "destination"      : bigjobasync.LOCAL,
                     "destination_path" : "."
                 }
             ]

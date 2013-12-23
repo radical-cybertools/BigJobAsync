@@ -1,8 +1,9 @@
-BigJobSimple
-============
+BigJobAsync
+===========s
 
-Lean wrapper script around BigJob that implements transparent file transfers, 
-and makes heavy use of callbacks and multiprocessing to speed up transfers in the background. 
+Asynchronous wrapper around BigJob that implements transparent file transfers
+and makes heavy use of callbacks and multiprocessing to speed up transfers in
+the background.
 
 
 Installation

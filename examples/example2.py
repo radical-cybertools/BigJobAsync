@@ -11,7 +11,7 @@ __copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import sys
-import bjsimple 
+import bigjobasync 
 
 # Number of tasks to run
 N = 32
@@ -63,6 +63,7 @@ if __name__ == "__main__":
     stampede = bjsimple.Resource(
         name       = "stampede:16cores", 
         resource   = bjsimple.RESOURCES['XSEDE.STAMPEDE'], 
+        username   = "tg802352",
         runtime    = 2, 
         cores      = 16, 
         workdir    = "/scratch/00988/tg802352/example/",

@@ -29,7 +29,7 @@ class Resource(threading.Thread):
     # ------------------------------------------------------------------------
     #
     def __init__(self, name, resource, runtime, cores, workdir, 
-        project_id=None, queue=constants.DEFAULT):
+        username=None, project_id=None, queue=constants.DEFAULT):
         """Le Constructeur creates a resource new instance.
         """
         threading.Thread.__init__(self)
@@ -37,17 +37,18 @@ class Resource(threading.Thread):
         self.lock       = threading.Lock()
         self._terminate = threading.Event()
 
-        self._resource_obj = {}
-        self._resource_obj['log'] = []
-        self._resource_obj['callbacks'] = []
-        self._resource_obj['state'] = constants.NEW
-        self._resource_obj['name'] = name
-        self._resource_obj['resource'] = resource
-        self._resource_obj['workdir'] = workdir
-        self._resource_obj['runtime'] = runtime
-        self._resource_obj['cores'] = cores
-        self._resource_obj['project_id'] = project_id
-        self._resource_obj['queue'] = queue
+        self._resource_obj                       = {}
+        self._resource_obj['log']                = []
+        self._resource_obj['callbacks']          = []
+        self._resource_obj['state']              = constants.NEW
+        self._resource_obj['name']               = name
+        self._resource_obj['username']           = username 
+        self._resource_obj['resource']           = resource
+        self._resource_obj['workdir']            = workdir
+        self._resource_obj['runtime']            = runtime
+        self._resource_obj['cores']              = cores
+        self._resource_obj['project_id']         = project_id
+        self._resource_obj['queue']              = queue
         self._resource_obj['remote_workdir_url'] = "%s/%s/" % \
          (resource['shared_fs_url'], workdir)
 
