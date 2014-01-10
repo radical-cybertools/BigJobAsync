@@ -58,6 +58,8 @@ class _InputTransferWorker(multiprocessing.Process):
                     # 'ready_to_exec' or 'failed' queues. 
                     self.transfer_input_file(task)
                     #self._tasks_ready_to_exec_q.put(task)
+                    self._tasks_ready_to_transfer_input_q.task_done()
+
                 except Queue.Empty:
                     break
 

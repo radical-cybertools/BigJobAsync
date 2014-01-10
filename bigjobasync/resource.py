@@ -57,12 +57,13 @@ class Resource(threading.Thread):
         remote_workdir_url = str(remote_workdir_url)
         self._resource_obj['remote_workdir_url'] = remote_workdir_url
 
+        self._terminate_on_empty_queue = False
 
-        self._ready_to_transfer_input_queue = multiprocessing.Queue()
-        self._ready_to_execute_queue = multiprocessing.Queue()
-        self._ready_to_transfer_output_queue = multiprocessing.Queue()
-        self._done_queue = multiprocessing.Queue()
-        self._failed_queue = multiprocessing.Queue()
+        self._ready_to_transfer_input_queue = multiprocessing.JoinableQueue()
+        self._ready_to_execute_queue = multiprocessing.JoinableQueue()
+        self._ready_to_transfer_output_queue = multiprocessing.JoinableQueue()
+        self._done_queue = multiprocessing.JoinableQueue()
+        self._failed_queue = multiprocessing.JoinableQueue()
 
         self._iftws = []
         for x in range(0, constants.MAX_INPUT_TRANSFER_WORKERS):
@@ -108,14 +109,20 @@ class Resource(threading.Thread):
 
     # ------------------------------------------------------------------------
     #
-    def allocate(self):
+    def allocate(self, terminate_on_empty_queue=False):
         """Tries to allocate the requested resource by starting a BigJob agent
         on the target machine.
+
+
+        If terminate_on_empty_queue=True, the resource will be shut down
+        as soon the last task has finished. 
         """
+        self._terminate_on_empty_queue = terminate_on_empty_queue
 
         # Here we start the BigJob worker. 
         self._bjw = _BigJobWorker(
             resource_obj=self._resource_obj,
+            ready_to_transfer_input_queue=self._ready_to_transfer_input_queue,
             ready_to_exec_q=self._ready_to_execute_queue,
             ready_to_transfer_output_q=self._ready_to_transfer_output_queue,
             done_q=self._done_queue,
@@ -135,7 +142,16 @@ class Resource(threading.Thread):
     def wait(self):
         """Waits for the resource to reach a terminal state.
         """
-        self._bjw.join()
+        self._ready_to_transfer_input_queue.join()
+        self._ready_to_execute_queue.join()
+        self._ready_to_transfer_output_queue.join()
+
+        if self._terminate_on_empty_queue is False:
+            # wait until the BJ runs out of queue time
+            self._bjw.join()
+        else:
+            # terminate bigjob
+            self._bjw.stop()
 
     # ------------------------------------------------------------------------
     #

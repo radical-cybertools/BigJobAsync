@@ -102,7 +102,9 @@ if __name__ == "__main__":
     #    * FAILED          (an error occured during pilot execution)
     #
     stampede.register_callbacks(resource_cb)
-    stampede.allocate()
+    # If terminate_on_empty_queue=True, the resource will be shut down as soon
+    # as the last task has finished. 
+    stampede.allocate(terminate_on_empty_queue=True)
 
     # Define tasks and their input and output files
     all_tasks = []
@@ -179,7 +181,10 @@ if __name__ == "__main__":
     # Submit all tasks to stampede
     stampede.schedule_tasks(all_tasks)
     
-    # Wait for the Resource allocation to finish, i.e., run out of wall time
+    # Wait for the Resource allocation to finish, i.e., run out of wall time.
+    # If terminate_on_empty_queue=True, the resource will be shut down as soon
+    # as the last task has finished. 
+    print "WAITING...."
     stampede.wait()
 
     sys.exit(0)
