@@ -7,15 +7,23 @@ Inline comments explain specific components of the code.
 
 __author__    = "Ole Weidner"
 __email__     = "ole.weidner@rutgers.edu"
-__copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
+__copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
-import sys
+import os, sys
 import bigjobasync 
 
-# Number of tasks to run
-N = 32
 
+# ----------------------------------------------------------------------------
+#
+# Number of tasks to run
+NUMTASKS    = 32
+# CHANGE: Your stampede username
+USERNAME    = "tg802352" 
+# CHANGE: Your stampede working directory 
+WORKDIR     = "/scratch/00988/tg802352/example/"
+# CHANGE: Your stampede allocation
+ALLOCATION  = "TG-MCB090174"
 
 # ----------------------------------------------------------------------------
 #
@@ -61,13 +69,13 @@ def task_cb(origin, old_state, new_state):
 if __name__ == "__main__":
 
     stampede = bigjobasync.Resource(
-        name       = "stampede:16cores", 
-        resource   = bigjobasync.RESOURCES['XSEDE.STAMPEDE'], 
-        username   = "tg802352",
-        runtime    = 2, 
+        name       = "stampede", 
+        resource   = bigjobasync.RESOURCES['XSEDE.STAMPEDE'],
+        username   = USERNAME,
+        runtime    = 5, 
         cores      = 16, 
-        workdir    = "/scratch/00988/tg802352/example/",
-        project_id = "TG-MCB090174"
+        workdir    = WORKDIR,
+        project_id = ALLOCATION
     )
 
     stampede.register_callbacks(resource_cb)
@@ -86,7 +94,7 @@ if __name__ == "__main__":
             {
                 "mode"        : bigjobasync.COPY,
                 "origin"      : bigjobasync.LOCAL,
-                "origin_path" : "/Users/oweidner/Work/Data/sharedinput.txt",
+                "origin_path" : "/%s/loreipsum_pt1.txt" % os.getcwd(),
             }
         ] 
     )
@@ -94,18 +102,18 @@ if __name__ == "__main__":
     all_tasks.append(data_staging_task)
 
     # Now we define the compute tasks that use the shared input data.
-    for i in range(0, N):
+    for i in range(0, NUMTASKS):
 
         combinator_task = bigjobasync.Task(
             name        = "combinator-task-%s" % i,
             cores       = 1,
             executable  = "/bin/bash",
-            arguments   = ["-c", "\"/bin/cat sharedinput.txt loreipsum_pt2.txt >> STDOUT\""], 
+            arguments   = ["-c", "\"/bin/cat loreipsum_pt1.txt loreipsum_pt2.txt >> STDOUT\""], 
             input = [
                 {
                     "mode"        : bigjobasync.LINK,  # create a symbolic link to the shared input file
                     "origin"      : data_staging_task, # file is 'part' of a different task 
-                    "origin_path" : "sharedinput.txt"
+                    "origin_path" : "loreipsum_pt1.txt"
                 },
                 {
                     "mode"        : bigjobasync.COPY,    

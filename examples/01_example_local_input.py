@@ -1,21 +1,33 @@
 #!/usr/bin/env python
 
-"""This example illustrates how to submit N tasks to 
-a remote resource, including input and output file transfer.
+"""This example illustrates how to submit N tasks to  a remote resource.
 
-Inline comments explain specific components of the code. 
+The scripts takes takes two input data files on the local machine
+(loreipsum_pt1.txt, loreipsum_pt2.txt) and transfers it to the  remote machine
+where they are assembled by a 'combinator' task. Once the task has finished,
+the assembled output file is transferred back to te local machine.
+
+Inline comments explain specific aspects of the code. 
 """
 
 __author__    = "Ole Weidner"
 __email__     = "ole.weidner@rutgers.edu"
-__copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
+__copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
-import sys
+import os, sys
 import bigjobasync 
 
+# ----------------------------------------------------------------------------
+#
 # Number of tasks to run
-N = 32
+NUMTASKS    = 32
+# CHANGE: Your stampede username
+USERNAME    = "tg802352" 
+# CHANGE: Your stampede working directory 
+WORKDIR     = "/scratch/00988/tg802352/example/"
+# CHANGE: Your stampede allocation
+ALLOCATION  = "TG-MCB090174"
 
 # ----------------------------------------------------------------------------
 #
@@ -23,7 +35,7 @@ def resource_cb(origin, old_state, new_state):
     """Resource callback function: writes resource allocation state 
     changes to STDERR.
 
-    It aborts the script script with exit code '-1' if the resource 
+    It aborts the script script with exit code '-1' if the resource
     allocation state is 'FAILED'.
 
     (Obviously, more logic can be built into the callback function, for 
@@ -70,13 +82,13 @@ if __name__ == "__main__":
     #    * project_id   the project ID to use for billing
     #
     stampede = bigjobasync.Resource(
-        name       = "stampede:16cores", 
+        name       = "stampede", 
         resource   = bigjobasync.RESOURCES['XSEDE.STAMPEDE'],
-        username   = "tg802352",
-        runtime    = 2, 
+        username   = USERNAME,
+        runtime    = 5, 
         cores      = 16, 
-        workdir    = "/scratch/00988/tg802352/example/",
-        project_id = "TG-MCB090174"
+        workdir    = WORKDIR,
+        project_id = ALLOCATION
     )
 
     # Register a callback function with the resource allocation. This function 
@@ -95,7 +107,7 @@ if __name__ == "__main__":
     # Define tasks and their input and output files
     all_tasks = []
 
-    for i in range(0, N):
+    for i in range(0, NUMTASKS):
 
         # A 'combinator' tasks takes two input files and appends one to the 
         # other. The first input file 'loreipsum_pt1.txt' is copied from the
@@ -114,38 +126,26 @@ if __name__ == "__main__":
         #    * input         a list of input file transfer directives (dicts)
         #    * output        a list of output file transfer directives (dicts)
         # 
-        # Each input file transfer directive dictionary has the 
-        # following structure:
-        #    
-        #    {
-        #        "mode"     : bjsimple.COPY # currently the only 'mode'
-        #        "path"     : path of the input file to copy 
-        #        "location" : either bjsimple.LOCAL (on 'this' machine) or 
-        #                     bjsimple.REMOTE (on the remote/executing machine)
-        #    }
-        #
         combinator_task = bigjobasync.Task(
             name        = "combinator-task-%s" % i,
             cores       = 1,
-            environment = {'OUTPUT_FILENAME': "loreipsum-%s.txt" % i},
+            environment = {'OUTPUT_FILENAME': "loreipsum-complete-%s.txt" % i},
             executable  = "/bin/bash",
             arguments   = ["-c", "\"/bin/cat loreipsum_pt1.txt loreipsum_pt2.txt >> $OUTPUT_FILENAME\""
-            ], 
+            ],
+            # transfer input files from the local machine (i.e., the machine
+            # where this script runs) into the task's workspace on the 
+            # remote machine. 
             input = [
                 { 
-                    # transfer an input file from the local machine (i.e., the machine
-                    # where this script runs) into the task's workspace on the 
-                    # remote machine.
                     "mode"        : bigjobasync.COPY,
                     "origin"      : bigjobasync.LOCAL,
-                    "origin_path" : "/Users/oweidner/Work/Data/loreipsum_pt1.txt",
+                    "origin_path" : "/%s/loreipsum_pt1.txt" % os.getcwd(),
                 },
                 {
-                    # copy an input file that is already in on the remote machine 
-                    # into the task's workspace.
                     "mode"        : bigjobasync.COPY, 
-                    "origin"      : bigjobasync.REMOTE, 
-                    "origin_path" : "/home1/00988/tg802352/loreipsum_pt2.txt",
+                    "origin"      : bigjobasync.LOCAL, 
+                    "origin_path" : "/%s/loreipsum_pt2.txt" % os.getcwd(),
                 }
             ], 
             output = [
@@ -153,7 +153,7 @@ if __name__ == "__main__":
                     # transfer the task's output file ('STDOUT') back to the local machine 
                     # (i.e., the machine where this script runs).
                     "mode"             : bigjobasync.COPY, 
-                    "origin_path"      : "loreipsum-%s.txt" % i,      
+                    "origin_path"      : "loreipsum-complete-%s.txt" % i,      
                     "destination"      : bigjobasync.LOCAL,
                     "destination_path" : "."
                 }
