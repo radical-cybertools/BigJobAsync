@@ -87,6 +87,8 @@ class _InputTransferWorker(multiprocessing.Process):
                     # 'ready_to_exec' or 'failed' queues. 
                     self.transfer_input_file(task)
                     #self._tasks_ready_to_exec_q.put(task)
+                    self._tasks_ready_to_transfer_input_q.task_done()
+
                 except Queue.Empty:
                     break
 
@@ -128,13 +130,13 @@ class _InputTransferWorker(multiprocessing.Process):
             # COPY LOCAL TO REMOTE FILE
             if origin == constants.LOCAL:
 
-                if mode == bigjobasync.LINK:
+                if mode == constants.LINK:
                     task._log.append("Mode '%s' is not supported for local-to-remote transfers." % mode)
                     task._set_state(constants.FAILED)
                     self._tasks_failed_q.put(task)
                     continue # on to the next directive 
 
-                elif mode == mode == bigjobasync.COPY:
+                elif mode == mode == constants.COPY:
                     try: 
                         # we use saga-python to copy a local file to the 
                         # remote destination
@@ -160,10 +162,10 @@ class _InputTransferWorker(multiprocessing.Process):
             # COPY / LINK REMOTE TO REMOTE FILE
             elif origin == constants.REMOTE:
                 try: 
-                    if mode == bigjobasync.COPY:
+                    if mode == constants.COPY:
                         # copy around stuff locally on the remote machine
                         task_workdir.copy(origin_path, ".")
-                    elif mode == bigjobasync.LINK: 
+                    elif mode == constants.LINK: 
                         # link stuff instead of copying it
                         task_workdir.link(origin_path, ".")
                     else:
@@ -184,13 +186,13 @@ class _InputTransferWorker(multiprocessing.Process):
                     print "LINKING: %s" % source
                     #target = "%s/%s" % (saga.Url(task_workdir_url).path, origin_path)
 
-                    if mode == bigjobasync.COPY:
+                    if mode == constants.COPY:
                         task._log.append("Copying REMOTE input file '%s'" % source)
                         task_workdir.copy(source, ".")
 
-                    elif mode == bigjobasync.LINK:
+                    elif mode == constants.LINK:
                         task._log.append("Linking REMOTE input file '%s'" % source)
-                        task_workdir.links(source, ".")
+                        task_workdir.link(source, ".")
                     else: 
                         raise task._log.append("Unsupported transfer mode '%s'" % mode)
 

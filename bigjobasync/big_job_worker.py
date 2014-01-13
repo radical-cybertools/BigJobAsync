@@ -21,8 +21,8 @@ class _BigJobWorker(multiprocessing.Process):
 
     # ------------------------------------------------------------------------
     #
-    def __init__(self, resource_obj, ready_to_exec_q, 
-        ready_to_transfer_output_q, done_q, failed_q):
+    def __init__(self, resource_obj, ready_to_transfer_input_queue, 
+        ready_to_exec_q, ready_to_transfer_output_q, done_q, failed_q):
         """DS
         """
         # Multiprocessing stuff
@@ -44,6 +44,7 @@ class _BigJobWorker(multiprocessing.Process):
         self._tasks_failed_q = failed_q
         self._tasks_ready_to_exec_q = ready_to_exec_q
         self._tasks_ready_to_transfer_output_q = ready_to_transfer_output_q
+        self._tasks_ready_to_transfer_input_q = ready_to_transfer_input_queue
 
 
     # ------------------------------------------------------------------------
@@ -112,17 +113,23 @@ class _BigJobWorker(multiprocessing.Process):
                     self._tasks_ready_to_transfer_output_q.put(pt['task'])
                     self._physical_tasks.remove(pt)
 
+                    self._tasks_ready_to_exec_q.task_done()
+
                 elif pt['task'].state in [constants.DONE]:
                     # Task is done, i.e., there are no output files to
                     # transfer. Remove it. 
                     self._tasks_done_q.put(pt['task'])
                     self._physical_tasks.remove(pt)
 
+                    self._tasks_ready_to_exec_q.task_done()
+
                 elif pt['task'].state in [constants.FAILED]:
                     # Task has failed, so there's not much we can do except for 
                     # removing it from the list of physical tasks
                     self._tasks_failed_q.put(pt['task'])
                     self._physical_tasks.remove(pt)
+
+                    self._tasks_ready_to_exec_q.task_done()
 
                 elif pt['task'].state in [constants.PENDING]:
                     # Task has been started but is still pending execution.
