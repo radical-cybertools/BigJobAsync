@@ -29,7 +29,7 @@ class Resource(threading.Thread):
     # ------------------------------------------------------------------------
     #
     def __init__(self, name, resource, runtime, cores, workdir, 
-        username=None, project_id=None, queue=constants.DEFAULT):
+        username=None, project_id=None, queue=constants.DEFAULT, _use_saga_pilot=False):
         """Le Constructeur creates a resource new instance.
         """
         threading.Thread.__init__(self)
@@ -49,6 +49,8 @@ class Resource(threading.Thread):
         self._resource_obj['cores']              = cores
         self._resource_obj['project_id']         = project_id
         self._resource_obj['queue']              = queue
+        self._resource_obj['_use_saga_pilot']    = _use_saga_pilot
+
 
         # inject username into remote_workdir_url
         remote_workdir_url = saga.Url("%s/%s/" % (resource['shared_fs_url'], workdir))

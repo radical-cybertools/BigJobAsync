@@ -17,35 +17,6 @@ import multiprocessing
 
 from task import Task
 
-
-def symlink_hack(link_source, link_target):
-    """This is a nasty workaround for the lack of symlinking capabilites
-    in saga-python prior 0.9.16. use at your own risk...
-    """
-    sftp_host   = saga.Url(task_workdir_url).host
-    sftp_port   = saga.Url(task_workdir_url).port
-    sftp_user   = saga.Url(task_workdir_url).username
-
-    #link_source = "%s/%s/%s" % (saga.Url(origin._remote_workdir_url).path, origin._dir_name, origin_path)
-    #link_target = "%s/%s" % (saga.Url(task_workdir_url).path, origin_path)
-
-    if sftp_user is not None:
-        link_cmd = "/bin/bash -c \"echo -e 'symlink %s %s' | sftp %s@%s\"" % (link_source, link_target, sftp_user, sftp_host)
-    else:
-        link_cmd = "/bin/bash -c \"echo -e 'symlink %s %s' | sftp %s\"" % (link_source, link_target, sftp_host)
-
-    process = subprocess.Popen(link_cmd, shell=True,
-                               stdout=subprocess.PIPE, 
-                               stderr=subprocess.PIPE)
-
-    # wait for the process to terminate
-    _, err = process.communicate()
-    errcode = process.returncode
-
-    if errcode != 0:
-        raise Exception("Linking FAILED: %s" % str(err))
-
-
 # ----------------------------------------------------------------------------
 #
 class _InputTransferWorker(multiprocessing.Process):
@@ -134,7 +105,7 @@ class _InputTransferWorker(multiprocessing.Process):
                     task._log.append("Mode '%s' is not supported for local-to-remote transfers." % mode)
                     task._set_state(constants.FAILED)
                     self._tasks_failed_q.put(task)
-                    continue # on to the next directive 
+                    return
 
                 elif mode == mode == constants.COPY:
                     try: 
@@ -149,13 +120,13 @@ class _InputTransferWorker(multiprocessing.Process):
                         task._log.append(str(ex))
                         task._set_state(constants.FAILED)
                         self._tasks_failed_q.put(task)
-                        continue # on to the next directive 
+                        return 
 
                 else:
                     raise task._log.append("Unsupported transfer mode '%s'" % mode)
                     task._set_state(constants.FAILED)
                     self._tasks_failed_q.put(task)
-                    continue # on to the next directive 
+                    return
 
             ####################################################################
             #
@@ -175,7 +146,7 @@ class _InputTransferWorker(multiprocessing.Process):
                     task._log.append(str(ex))
                     task._set_state(constants.FAILED)
                     self._tasks_failed_q.put(task)
-                    continue # on to the next directive
+                    return 
 
             ####################################################################
             #
@@ -183,8 +154,6 @@ class _InputTransferWorker(multiprocessing.Process):
             elif isinstance(origin, Task):
                 try: 
                     source = "%s/%s/%s" % (saga.Url(origin._remote_workdir_url).path, origin._dir_name, origin_path)
-                    print "LINKING: %s" % source
-                    #target = "%s/%s" % (saga.Url(task_workdir_url).path, origin_path)
 
                     if mode == constants.COPY:
                         task._log.append("Copying REMOTE input file '%s'" % source)
@@ -200,7 +169,7 @@ class _InputTransferWorker(multiprocessing.Process):
                     task._log.append(str(ex))
                     task._set_state(constants.FAILED)
                     self._tasks_failed_q.put(task)
-                    continue # on to the next directive
+                    return
 
             ####################################################################
             # UNSUPPORTED ORIGIN TYPE
@@ -208,7 +177,7 @@ class _InputTransferWorker(multiprocessing.Process):
                 raise task._log.append("Unsupported origin type '%s'" % origin)
                 task._set_state(constants.FAILED)
                 self._tasks_failed_q.put(task)
-                continue # on to the next directive 
+                return  
 
 
         try:

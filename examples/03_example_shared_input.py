@@ -12,12 +12,12 @@ __license__   = "MIT"
 
 import os, sys
 import bigjobasync 
-
+bigjobasync.USE_SAGA_PILOT = True
 
 # ----------------------------------------------------------------------------
 #
 # Number of tasks to run
-NUMTASKS    = 1
+NUMTASKS    = 32
 # CHANGE: Your stampede username
 USERNAME    = "tg802352" 
 # CHANGE: Your stampede working directory 
@@ -69,13 +69,14 @@ def task_cb(origin, old_state, new_state):
 if __name__ == "__main__":
 
     stampede = bigjobasync.Resource(
-        name       = "stampede", 
-        resource   = bigjobasync.RESOURCES['XSEDE.STAMPEDE'],
-        username   = USERNAME,
-        runtime    = 5, 
-        cores      = 16, 
-        workdir    = WORKDIR,
-        project_id = ALLOCATION
+        name            = "stampede", 
+        resource        = bigjobasync.RESOURCES['XSEDE.STAMPEDE'],
+        username        = USERNAME,
+        runtime         = 5, 
+        cores           = 16, 
+        workdir         = WORKDIR,
+        project_id      = ALLOCATION,
+        _use_saga_pilot = True
     )
 
     stampede.register_callbacks(resource_cb)

@@ -25,6 +25,7 @@ class _BigJobWorker(multiprocessing.Process):
         ready_to_exec_q, ready_to_transfer_output_q, done_q, failed_q):
         """DS
         """
+
         # Multiprocessing stuff
         multiprocessing.Process.__init__(self)
         self.daemon = True
@@ -45,6 +46,9 @@ class _BigJobWorker(multiprocessing.Process):
         self._tasks_ready_to_exec_q = ready_to_exec_q
         self._tasks_ready_to_transfer_output_q = ready_to_transfer_output_q
         self._tasks_ready_to_transfer_input_q = ready_to_transfer_input_queue
+
+        print "Using SAGA-Pilot: %s" % resource_obj['_use_saga_pilot']
+
 
 
     # ------------------------------------------------------------------------
