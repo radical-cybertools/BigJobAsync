@@ -125,7 +125,7 @@ setup_args = {
     'package_data'     : {'': ['*.sh', 'VERSION', ]},
     #'test_suite'       : 'sinon.tests',
     'install_requires' : ['setuptools',
-                          'BIgJob',
+                          'BigJob',
                           'radical.utils',
                           'saga-python'],
     #'tests_require'    : ['setuptools', 'nose'],

@@ -14,7 +14,7 @@ import sys
 import bigjobasync 
 
 # Number of tasks to run
-N = 32
+N = 1
 
 
 # ----------------------------------------------------------------------------

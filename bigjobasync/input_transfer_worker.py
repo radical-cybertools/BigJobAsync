@@ -17,6 +17,35 @@ import multiprocessing
 
 from task import Task
 
+
+def symlink_hack(link_source, link_target):
+    """This is a nasty workaround for the lack of symlinking capabilites
+    in saga-python prior 0.9.16. use at your own risk...
+    """
+    sftp_host   = saga.Url(task_workdir_url).host
+    sftp_port   = saga.Url(task_workdir_url).port
+    sftp_user   = saga.Url(task_workdir_url).username
+
+    #link_source = "%s/%s/%s" % (saga.Url(origin._remote_workdir_url).path, origin._dir_name, origin_path)
+    #link_target = "%s/%s" % (saga.Url(task_workdir_url).path, origin_path)
+
+    if sftp_user is not None:
+        link_cmd = "/bin/bash -c \"echo -e 'symlink %s %s' | sftp %s@%s\"" % (link_source, link_target, sftp_user, sftp_host)
+    else:
+        link_cmd = "/bin/bash -c \"echo -e 'symlink %s %s' | sftp %s\"" % (link_source, link_target, sftp_host)
+
+    process = subprocess.Popen(link_cmd, shell=True,
+                               stdout=subprocess.PIPE, 
+                               stderr=subprocess.PIPE)
+
+    # wait for the process to terminate
+    _, err = process.communicate()
+    errcode = process.returncode
+
+    if errcode != 0:
+        raise Exception("Linking FAILED: %s" % str(err))
+
+
 # ----------------------------------------------------------------------------
 #
 class _InputTransferWorker(multiprocessing.Process):
@@ -90,74 +119,94 @@ class _InputTransferWorker(multiprocessing.Process):
         # Next we can take care of the file transfers
         for directive in task.input:
 
+            mode        = directive['mode']
             origin      = directive['origin']
             origin_path = directive['origin_path']
 
+            ####################################################################
+            #
+            # COPY LOCAL TO REMOTE FILE
             if origin == constants.LOCAL:
-                try: 
-                    # we use saga-python to copy a local file to the 
-                    # remote destination
-                    task._log.append("Copying LOCAL input file '%s'" % origin_path)
-                    local_filename = "file://localhost//%s" % origin_path
-                    local_file = saga.filesystem.File(local_filename)
-                    local_file.copy(task_workdir_url)
-                    local_file.close()
-                except Exception, ex:
-                    task._log.append(str(ex))
+
+                if mode == bigjobasync.LINK:
+                    task._log.append("Mode '%s' is not supported for local-to-remote transfers." % mode)
                     task._set_state(constants.FAILED)
                     self._tasks_failed_q.put(task)
-                    return 
+                    continue # on to the next directive 
 
-            elif origin == constants.REMOTE:
-                try: 
-                    # copy around stuff locally on the remote machine
-                    task_workdir.copy(origin_path, ".")
-                except Exception, ex:
-                    task._log.append(str(ex))
-                    task._set_state(constants.FAILED)
-                    self._tasks_failed_q.put(task)
-                    return
-
-            elif isinstance(origin, Task):
-                try: 
-                    # this is a hack / workaround until SAGA-Python supports 
-                    # linking files.
-
-                    sftp_host   = saga.Url(task_workdir_url).host
-                    sftp_port   = saga.Url(task_workdir_url).port
-                    sftp_user   = saga.Url(task_workdir_url).username
-
-                    link_source = "%s/%s/%s" % (saga.Url(origin._remote_workdir_url).path, origin._dir_name, origin_path)
-                    link_target = "%s/%s" % (saga.Url(task_workdir_url).path, origin_path)
-
-                    if sftp_user is not None:
-                        link_cmd = "/bin/bash -c \"echo -e 'symlink %s %s' | sftp %s@%s\"" % (link_source, link_target, sftp_user, sftp_host)
-                    else:
-                        link_cmd = "/bin/bash -c \"echo -e 'symlink %s %s' | sftp %s\"" % (link_source, link_target, sftp_host)
-                    task._log.append("Linking input file: %s" % (link_cmd))
-
-                    process = subprocess.Popen(link_cmd, shell=True,
-                                               stdout=subprocess.PIPE, 
-                                               stderr=subprocess.PIPE)
-
-                    # wait for the process to terminate
-                    out, err = process.communicate()
-                    errcode = process.returncode
-
-                    if errcode != 0:
-                        task._log.append("Linking FAILED: %s" % str(err))
+                elif mode == mode == bigjobasync.COPY:
+                    try: 
+                        # we use saga-python to copy a local file to the 
+                        # remote destination
+                        task._log.append("Copying LOCAL input file '%s'" % origin_path)
+                        local_filename = "file://localhost//%s" % origin_path
+                        local_file = saga.filesystem.File(local_filename)
+                        local_file.copy(task_workdir_url)
+                        local_file.close()
+                    except Exception, ex:
+                        task._log.append(str(ex))
                         task._set_state(constants.FAILED)
                         self._tasks_failed_q.put(task)
-                        return 
+                        continue # on to the next directive 
+
+                else:
+                    raise task._log.append("Unsupported transfer mode '%s'" % mode)
+                    task._set_state(constants.FAILED)
+                    self._tasks_failed_q.put(task)
+                    continue # on to the next directive 
+
+            ####################################################################
+            #
+            # COPY / LINK REMOTE TO REMOTE FILE
+            elif origin == constants.REMOTE:
+                try: 
+                    if mode == bigjobasync.COPY:
+                        # copy around stuff locally on the remote machine
+                        task_workdir.copy(origin_path, ".")
+                    elif mode == bigjobasync.LINK: 
+                        # link stuff instead of copying it
+                        task_workdir.link(origin_path, ".")
+                    else:
+                        raise Exception("Unsupported transfer mode '%s'" % mode)
 
                 except Exception, ex:
                     task._log.append(str(ex))
                     task._set_state(constants.FAILED)
                     self._tasks_failed_q.put(task)
-                    return
+                    continue # on to the next directive
 
+            ####################################################################
+            #
+            # COPY / LINK TASK OUTPUT TO OTHER 
+            elif isinstance(origin, Task):
+                try: 
+                    source = "%s/%s/%s" % (saga.Url(origin._remote_workdir_url).path, origin._dir_name, origin_path)
+                    print "LINKING: %s" % source
+                    #target = "%s/%s" % (saga.Url(task_workdir_url).path, origin_path)
+
+                    if mode == bigjobasync.COPY:
+                        task._log.append("Copying REMOTE input file '%s'" % source)
+                        task_workdir.copy(source, ".")
+
+                    elif mode == bigjobasync.LINK:
+                        task._log.append("Linking REMOTE input file '%s'" % source)
+                        task_workdir.links(source, ".")
+                    else: 
+                        raise task._log.append("Unsupported transfer mode '%s'" % mode)
+
+                except Exception, ex:
+                    task._log.append(str(ex))
+                    task._set_state(constants.FAILED)
+                    self._tasks_failed_q.put(task)
+                    continue # on to the next directive
+
+            ####################################################################
+            # UNSUPPORTED ORIGIN TYPE
             else:
-                raise Exception("Invalid paramater for input file origin: %s" % origin)
+                raise task._log.append("Unsupported origin type '%s'" % origin)
+                task._set_state(constants.FAILED)
+                self._tasks_failed_q.put(task)
+                continue # on to the next directive 
 
 
         try:
