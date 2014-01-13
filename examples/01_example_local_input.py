@@ -184,7 +184,6 @@ if __name__ == "__main__":
     # Wait for the Resource allocation to finish, i.e., run out of wall time.
     # If terminate_on_empty_queue=True, the resource will be shut down as soon
     # as the last task has finished. 
-    print "WAITING...."
     stampede.wait()
 
     sys.exit(0)
