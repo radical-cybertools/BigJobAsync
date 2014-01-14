@@ -10,18 +10,9 @@ __copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import os, sys, uuid
+import optparse
 import bigjobasync 
-
-# ----------------------------------------------------------------------------
-#
-# Number of tasks to run
-NUMTASKS    = 1
-# CHANGE: Your stampede username
-USERNAME    = "tg802352" 
-# CHANGE: Your stampede working directory 
-WORKDIR     = "/scratch/00988/tg802352/example/"
-# CHANGE: Your stampede allocation
-ALLOCATION  = "TG-MCB090174"
+from config import CONFIG
 
 # ----------------------------------------------------------------------------
 #
@@ -114,6 +105,21 @@ def run_test_task(resource_name, username, workdir, allocation):
 #
 if __name__ == "__main__":
 
-    run_test_task('XSEDE.STAMPEDE', USERNAME, WORKDIR, ALLOCATION)
-    sys.exit(0)
+    usage = "usage: %prog [--test]"
+    parser = optparse.OptionParser(usage=usage)
+
+    parser.add_option('--test',
+                      dest='test',
+                      action="store_true",
+                      help='Launch a test job to the resource defined in config.py.')
+
+    # parse the whole shebang
+    (options, args) = parser.parse_args()
+
+    if options.test is True:
+        run_test_task(CONFIG['resource'], CONFIG['username'], CONFIG['workdir'], CONFIG['allocation'])   
+        sys.exit(0)
+    else:
+        print "not implemented yet"
+        sys.exit(0)
 
