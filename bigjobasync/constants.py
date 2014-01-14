@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""DOCSTRING
+"""Defines various constants.
 """
 
 __author__    = "Ole Weidner"

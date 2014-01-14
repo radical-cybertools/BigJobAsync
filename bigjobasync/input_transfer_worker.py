@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""DOCSTRING
+"""Implements a multiprocessing.Process that processes task input 
+file directives (transferring, moving, locally / remtotely etc.)
 """
 
 __author__    = "Ole Weidner"

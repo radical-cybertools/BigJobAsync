@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""Resource and task management via SAGA-Pilot
+"""Implements a resource and task management multiprocessing.Process
+based on SAGA-Pilot.
 """
 
 __author__    = "Ole Weidner"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""DOCSTRING
+"""Various compute resources are defined here.
 """
 
 __author__    = "Ole Weidner"

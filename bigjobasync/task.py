@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""DOCSTRING
+"""The task representation / interface in BigJobAsync.
 """
 
 __author__    = "Ole Weidner"

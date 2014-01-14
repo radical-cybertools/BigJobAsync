@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-"""Resource and task management via BigJob
+"""Implements a resource and task management multiprocessing.Process
+based on BigJob.
 """
+
 
 __author__    = "Ole Weidner"
 __email__     = "ole.weidner@rutgers.edu"
