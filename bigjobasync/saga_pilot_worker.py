@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Resource and task management via BigJob
+"""Resource and task management via SAGA-Pilot
 """
 
 __author__    = "Ole Weidner"
@@ -10,7 +10,7 @@ __license__   = "MIT"
 
 import saga
 import time
-import pilot
+import sinon
 import Queue
 import constants
 import multiprocessing
@@ -19,7 +19,7 @@ from logger import logger
 
 # ----------------------------------------------------------------------------
 #
-class _BigJobWorker(multiprocessing.Process):
+class _SAGAPilotWorker(multiprocessing.Process):
 
     # ------------------------------------------------------------------------
     #
@@ -49,7 +49,7 @@ class _BigJobWorker(multiprocessing.Process):
         self._tasks_ready_to_transfer_output_q = ready_to_transfer_output_q
         self._tasks_ready_to_transfer_input_q = ready_to_transfer_input_queue
 
-        logger.info("Starting BigJobWorker using BigJob version %s" % pilot.version)
+        logger.info("Starting SAGAPilotWorker using SAGA-Pilot version %s" % sinon.version)
 
 
     # ------------------------------------------------------------------------

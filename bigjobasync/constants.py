@@ -5,7 +5,7 @@
 
 __author__    = "Ole Weidner"
 __email__     = "ole.weidner@rutgers.edu"
-__copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
+__copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 # ----------------------------------------------------------------------------

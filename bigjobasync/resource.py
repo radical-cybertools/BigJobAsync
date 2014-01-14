@@ -5,7 +5,7 @@
 
 __author__    = "Ole Weidner"
 __email__     = "ole.weidner@rutgers.edu"
-__copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
+__copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import time
@@ -17,7 +17,8 @@ import multiprocessing
 
 import constants
 
-from big_job_worker         import _BigJobWorker
+from logger import logger
+
 from input_transfer_worker  import _InputTransferWorker
 from output_transfer_worker import _OutputTransferWorker
 
@@ -29,7 +30,7 @@ class Resource(threading.Thread):
     # ------------------------------------------------------------------------
     #
     def __init__(self, name, resource, runtime, cores, workdir, 
-        username=None, project_id=None, queue=constants.DEFAULT, _use_saga_pilot=False):
+        username=None, project_id=None, queue=constants.DEFAULT):
         """Le Constructeur creates a resource new instance.
         """
         threading.Thread.__init__(self)
@@ -49,8 +50,23 @@ class Resource(threading.Thread):
         self._resource_obj['cores']              = cores
         self._resource_obj['project_id']         = project_id
         self._resource_obj['queue']              = queue
-        self._resource_obj['_use_saga_pilot']    = _use_saga_pilot
 
+        # make sure the backends we need are avaialbe 
+        from bigjobasync import USE_SAGA_PILOT
+        if USE_SAGA_PILOT is True:
+            try: 
+                import sinon
+            except ImportError:
+                raise Exception("Couldn't find SAGA-Pilot. Please install first via 'pip install --upgrade -e git://github.com/saga-project/saga-pilot.git@master#egg=saga-pilot'.")
+        else:
+            try:
+                import pilot
+            except ImportError:
+                raise Exception("Couldn't find BigJob. Please install first via 'pip install --upgrade bigjob'.")
+
+        # make sure we have at least version0.9.16 of saga-python
+        if saga.version < "0.9.16":
+            raise Exception("Need saga-python >= 0.9.16. Found %s. Please update via 'pip install --upgrade saga-python'.")
 
         # inject username into remote_workdir_url
         remote_workdir_url = saga.Url("%s/%s/" % (resource['shared_fs_url'], workdir))
@@ -70,6 +86,7 @@ class Resource(threading.Thread):
         self._iftws = []
         for x in range(0, constants.MAX_INPUT_TRANSFER_WORKERS):
             iftw = _InputTransferWorker(
+                wid=x+1,
                 ready_to_transfer_input_q=self._ready_to_transfer_input_queue,
                 ready_to_exec_q=self._ready_to_execute_queue,
                 done_q=self._done_queue,
@@ -83,6 +100,7 @@ class Resource(threading.Thread):
         self._oftws = []
         for x in range(0, constants.MAX_OUTPUT_TRANSFER_WORKERS):
             oftw = _OutputTransferWorker(
+                wid=x+1,
                 ready_to_transfer_output_q=self._ready_to_transfer_output_queue,
                 done_q=self._done_queue,
                 failed_q=self._failed_queue,
@@ -121,15 +139,34 @@ class Resource(threading.Thread):
         """
         self._terminate_on_empty_queue = terminate_on_empty_queue
 
-        # Here we start the BigJob worker. 
-        self._bjw = _BigJobWorker(
-            resource_obj=self._resource_obj,
-            ready_to_transfer_input_queue=self._ready_to_transfer_input_queue,
-            ready_to_exec_q=self._ready_to_execute_queue,
-            ready_to_transfer_output_q=self._ready_to_transfer_output_queue,
-            done_q=self._done_queue,
-            failed_q=self._failed_queue,
-        )
+        # Here we start the BigJob or SAGA-Pilot worker. 
+        from bigjobasync import USE_SAGA_PILOT
+        if USE_SAGA_PILOT is True:
+            logger.info("Using SAGA-Pilot for resource and task management.")
+
+            from bigjobasync.saga_pilot_worker import _SAGAPilotWorker
+            self._bjw = _SAGAPilotWorker(
+                resource_obj=self._resource_obj,
+                ready_to_transfer_input_queue=self._ready_to_transfer_input_queue,
+                ready_to_exec_q=self._ready_to_execute_queue,
+                ready_to_transfer_output_q=self._ready_to_transfer_output_queue,
+                done_q=self._done_queue,
+                failed_q=self._failed_queue,
+            )
+
+        else: 
+            logger.info("Using BigJob for resource and task management.")
+
+            from bigjobasync.big_job_worker import _BigJobWorker
+            self._bjw = _BigJobWorker(
+                resource_obj=self._resource_obj,
+                ready_to_transfer_input_queue=self._ready_to_transfer_input_queue,
+                ready_to_exec_q=self._ready_to_execute_queue,
+                ready_to_transfer_output_q=self._ready_to_transfer_output_queue,
+                done_q=self._done_queue,
+                failed_q=self._failed_queue,
+            )
+
         self._bjw.start()
 
     # ------------------------------------------------------------------------

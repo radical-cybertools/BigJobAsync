@@ -13,6 +13,7 @@ __license__   = "MIT"
 
 import os, sys
 import bigjobasync 
+bigjobasync.USE_SAGA_PILOT = True
 
 # ----------------------------------------------------------------------------
 #

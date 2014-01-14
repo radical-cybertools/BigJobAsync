@@ -75,8 +75,7 @@ if __name__ == "__main__":
         runtime         = 5, 
         cores           = 16, 
         workdir         = WORKDIR,
-        project_id      = ALLOCATION,
-        _use_saga_pilot = True
+        project_id      = ALLOCATION
     )
 
     stampede.register_callbacks(resource_cb)

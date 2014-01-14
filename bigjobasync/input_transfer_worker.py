@@ -5,7 +5,7 @@
 
 __author__    = "Ole Weidner"
 __email__     = "ole.weidner@rutgers.edu"
-__copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
+__copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import saga
@@ -17,13 +17,16 @@ import multiprocessing
 
 from task import Task
 
+from logger import logger
+
+
 # ----------------------------------------------------------------------------
 #
 class _InputTransferWorker(multiprocessing.Process):
 
     # ------------------------------------------------------------------------
     #
-    def __init__(self, ready_to_transfer_input_q, ready_to_exec_q,
+    def __init__(self, wid, ready_to_transfer_input_q, ready_to_exec_q,
                  done_q, failed_q):
         """DS
         """
@@ -36,6 +39,9 @@ class _InputTransferWorker(multiprocessing.Process):
         self._tasks_failed_q = failed_q
         self._tasks_ready_to_exec_q = ready_to_exec_q
         self._tasks_ready_to_transfer_input_q = ready_to_transfer_input_q
+
+        logger.info("Starting InputTransferWorker %d using SAGA version %s" % (wid, saga.version))
+
 
     # ------------------------------------------------------------------------
     #

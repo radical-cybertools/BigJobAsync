@@ -5,7 +5,7 @@
 
 __author__    = "Ole Weidner"
 __email__     = "ole.weidner@rutgers.edu"
-__copyright__ = "Copyright 2013, The RADICAL Project at Rutgers"
+__copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import os 
@@ -18,13 +18,15 @@ import multiprocessing
 
 from cgi import parse_qs
 
+from logger import logger
+
 # ----------------------------------------------------------------------------
 #
 class _OutputTransferWorker(multiprocessing.Process):
 
     # ------------------------------------------------------------------------
     #
-    def __init__(self, ready_to_transfer_output_q, done_q, failed_q):
+    def __init__(self, wid, ready_to_transfer_output_q, done_q, failed_q):
         multiprocessing.Process.__init__(self)
         self.daemon = True
         self._stop  = False
@@ -33,6 +35,9 @@ class _OutputTransferWorker(multiprocessing.Process):
         self._tasks_done_q = done_q
         self._tasks_failed_q = failed_q
         self._tasks_ready_to_transfer_output_q = ready_to_transfer_output_q
+
+        logger.info("Starting OutputTransferWorker %d using SAGA version %s" % (wid, saga.version))
+
 
     # ------------------------------------------------------------------------
     #

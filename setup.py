@@ -127,7 +127,7 @@ setup_args = {
     'install_requires' : ['setuptools',
                           'BigJob',
                           'radical.utils',
-                          'saga-python>=0.9.16'],
+                          'saga-python'],
     #'tests_require'    : ['setuptools', 'nose'],
     #'test_suite'       : 'sinon.tests',
     'zip_safe'         : False,
