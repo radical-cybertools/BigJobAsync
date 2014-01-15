@@ -1,4 +1,5 @@
-## Resource configuration file
+""" Resource configuration file
+"""
 
 CONFIG = {
 

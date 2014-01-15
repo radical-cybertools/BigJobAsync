@@ -1,4 +1,5 @@
-# Application kernel configuration file
+""" Application kernel configuration file.
+"""
 
 KERNEL = {
 
@@ -9,6 +10,7 @@ KERNEL = {
         { 
             "XSEDE.STAMPEDE" : 
             {
+                "environment"   : {"FOO": "BAR"},
                 "pre_execution" : "module load amber",
                 "executable"    : "/opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/MMPBSA.py"
             }

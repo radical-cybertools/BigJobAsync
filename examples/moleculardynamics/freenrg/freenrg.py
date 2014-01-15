@@ -72,12 +72,14 @@ def run_test_task(resource_name, username, workdir, allocation):
     # The test task
     output_file = "/tmp/MMPBSA-test-task-%s" % str(uuid.uuid4())
 
+    kernelcfg = KERNEL["MMPBSA"]["resources"][resource_name]
+
     mmpbsa_test_task = bigjobasync.Task(
         name        = "MMPBSA-test-task",
         cores       = 1,
-        #environment = {'OUTPUT_FILENAME': "loreipsum-complete-%s.txt" % i},
+        environment = kernelcfg["environment"],
         executable  = "/bin/bash",
-        arguments   = ["-l", "-c", "\"module load amber && echo -n MMPBSA path: && which MMPBSA.py && echo -n MMPBSA version: && MMPBSA.py --version\""],
+        arguments   = ["-l", "-c", "\"%s && echo -n MMPBSA path: && which MMPBSA.py && echo -n MMPBSA version: && MMPBSA.py --version\"" % kernelcfg["pre_execution"]],
 
         output = [
             {
