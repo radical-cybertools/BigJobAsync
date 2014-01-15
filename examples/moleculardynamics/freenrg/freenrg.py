@@ -79,7 +79,7 @@ def run_test_job(resource_name, username, workdir, allocation):
         environment = kernelcfg["environment"],
         executable  = "/bin/bash",
         arguments   = ["-l", "-c", "\"%s && %s -i ~/MMPBSASampleDATA/nmode.py -cp ~/MMPBSASampleDATA/com.top.2 -rp ~/MMPBSASampleDATA/rec.top.2 -lp ~/MMPBSASampleDATA/lig.top -y ~/MMPBSASampleDATA/rep10.traj \"" % \
-            (kernelcfg["pre_execution"], kernelcfg["executable"]],
+            (kernelcfg["pre_execution"], kernelcfg["executable"])],
 
         output = [
             {
