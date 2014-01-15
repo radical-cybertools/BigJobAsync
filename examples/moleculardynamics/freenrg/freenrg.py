@@ -59,7 +59,7 @@ def run_test_job(resource_name, username, workdir, allocation):
         name       = resource_name, 
         resource   = bigjobasync.RESOURCES[resource_name],
         username   = username,
-        runtime    = 5, 
+        runtime    = 60, 
         cores      = 16, 
         workdir    = workdir,
         project_id = allocation
