@@ -10,10 +10,11 @@ __license__   = "MIT"
 
 import uuid
 from constants import * 
+from tracing   import Traceable
 
 # ----------------------------------------------------------------------------
 #
-class Task(object):
+class Task(Traceable):
 
     # ------------------------------------------------------------------------
     #
@@ -37,6 +38,9 @@ class Task(object):
 
         self._dir_name = "%s__%s" % (self.name, self.uid)
         self._remote_workdir_url = None
+
+        # Traceable interface
+        Traceable.__init__(self)
 
     # ------------------------------------------------------------------------
     #

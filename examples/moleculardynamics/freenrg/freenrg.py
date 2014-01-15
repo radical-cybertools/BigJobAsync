@@ -12,7 +12,9 @@ __license__   = "MIT"
 import os, sys, uuid
 import optparse
 import bigjobasync 
+
 from config import CONFIG
+from kernel import KERNEL
 
 # ----------------------------------------------------------------------------
 #

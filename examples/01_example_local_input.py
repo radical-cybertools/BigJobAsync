@@ -16,6 +16,7 @@ __copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import os, sys
+
 import bigjobasync 
 bigjobasync.USE_SAGA_PILOT = False
 
@@ -186,6 +187,11 @@ if __name__ == "__main__":
     # If terminate_on_empty_queue=True, the resource will be shut down as soon
     # as the last task has finished. 
     stampede.wait()
+
+    # Get traces returns a dictionary of execution traces. Execution traces are 
+    # timing profiles of the resource itself (start time, stop time) as well as
+    # of the individual tasks and data transfer operations. 
+    traces = bigjobasync.get_traces()
 
     sys.exit(0)
 

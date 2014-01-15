@@ -25,7 +25,7 @@ from output_transfer_worker import _OutputTransferWorker
 
 # ----------------------------------------------------------------------------
 #
-class Resource(threading.Thread):
+class Resource(threading.Thread, Traceable):
 
     # ------------------------------------------------------------------------
     #
@@ -37,6 +37,9 @@ class Resource(threading.Thread):
         self.daemon     = True
         self.lock       = threading.Lock()
         self._terminate = threading.Event()
+
+        # Initialize the traceable interface
+        Traceable.__init__(self)
 
         self._resource_obj                       = {}
         self._resource_obj['log']                = []
