@@ -27,7 +27,7 @@ The `freenrg` script provides a 'test mode' in which only a single task is submi
 Before you start running large simulations on a resource, you should run test mode at least once to ensure that everything (?) is in place:
 
 ```
-$> python freenrg.py --test
+$> python freenrg.py --checkenv
 ``` 
 
 The output should look like this:
@@ -46,5 +46,59 @@ The output should look like this:
 Test task results:
 MMPBSA path:/opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/MMPBSA.py
 MMPBSA version:MMPBSA.py: Version 13.0
+```
+
+```
+$> python freenrg.py --testjob
+```
+
+Output: 
+
+```
+(MDStack)oweidner@entropy:~/BigJobAsync-src/examples/moleculardynamics/freenrg$ python freenrg.py --testjob
+ * Task MMPBSA-fe-test-task state changed from 'New' to 'TransferringInput'.
+ * Task MMPBSA-fe-test-task state changed from 'TransferringInput' to 'WaitingForExecution'.
+ * Resource '<_BigJobWorker(_BigJobWorker-9, started daemon)>' state changed from 'New' to 'Pending'.
+ * Task MMPBSA-fe-test-task state changed from 'WaitingForExecution' to 'Pending'.
+ * Resource '<_BigJobWorker(_BigJobWorker-9, started daemon)>' state changed from 'Pending' to 'Running'.
+ * Task MMPBSA-fe-test-task state changed from 'Pending' to 'Running'.
+ * Task MMPBSA-fe-test-task state changed from 'Running' to 'WaitingForOutputTransfer'.
+ * Task MMPBSA-fe-test-task state changed from 'WaitingForOutputTransfer' to 'TransferringOutput'.
+ * Task MMPBSA-fe-test-task state changed from 'TransferringOutput' to 'Done'.
+
+Test task results:
+Loading and checking parameter files for compatibility...
+Preparing trajectories for simulation...
+20 frames were processed by cpptraj for use in calculation.
+
+Running calculations on normal system...
+
+Beginning GB calculations with /opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/mmpbsa_py_energy
+  calculating complex contribution...
+  calculating receptor contribution...
+  calculating ligand contribution...
+
+Beginning PB calculations with /opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/mmpbsa_py_energy
+  calculating complex contribution...
+  calculating receptor contribution...
+  calculating ligand contribution...
+
+Timing:
+Total setup time:                           0.042 min.
+Creating trajectories with cpptraj:         0.030 min.
+Total calculation time:                     8.192 min.
+
+Total GB calculation time:                  1.250 min.
+Total PB calculation time:                  6.942 min.
+
+Statistics calculation & output writing:    0.000 min.
+Total time taken:                           8.274 min.
+
+
+MMPBSA.py Finished! Thank you for using. Please cite us if you publish this work with this paper:
+   Miller III, B. R., McGee Jr., T. D., Swails, J. M. Homeyer, N. Gohlke, H. and Roitberg, A. E.
+   J. Chem. Theory Comput., 2012, 8 (9) pp 3314--3321
+mmpbsa_py_energy found! Using /opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/mmpbsa_py_energy
+cpptraj found! Using /opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/cpptraj
 ```
 
