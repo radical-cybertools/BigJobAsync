@@ -59,7 +59,7 @@ def run_test_job(resource_name, username, workdir, allocation):
         name       = resource_name, 
         resource   = bigjobasync.RESOURCES[resource_name],
         username   = username,
-        runtime    = 60, 
+        runtime    = 300, 
         cores      = 16, 
         workdir    = workdir,
         project_id = allocation
@@ -78,7 +78,7 @@ def run_test_job(resource_name, username, workdir, allocation):
         cores       = 1,
         environment = kernelcfg["environment"],
         executable  = "/bin/bash",
-        arguments   = ["-l", "-c", "\"%s && %s -i ~/MMPBSASampleDATA/nmode.py -cp ~/MMPBSASampleDATA/com.top.2 -rp ~/MMPBSASampleDATA/rec.top.2 -lp ~/MMPBSASampleDATA/lig.top -y ~/MMPBSASampleDATA/trajectories/rep10.traj \"" % \
+        arguments   = ["-l", "-c", "\"%s && %s -i ~/MMPBSASampleDATA/nmode.5h.py -cp ~/MMPBSASampleDATA/com.top.2 -rp ~/MMPBSASampleDATA/rec.top.2 -lp ~/MMPBSASampleDATA/lig.top -y ~/MMPBSASampleDATA/trajectories/rep10.traj \"" % \
             (kernelcfg["pre_execution"], kernelcfg["executable"])],
 
         output = [
