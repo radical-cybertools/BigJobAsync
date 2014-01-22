@@ -10,6 +10,7 @@ __copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import os, sys, uuid
+import urllib
 import optparse
 import bigjobasync 
 
@@ -53,6 +54,22 @@ def run_test_job(resource_name, username, workdir, allocation):
     """Runs a single FE test job.
     """
 
+    # Download the sample data from MDStack server
+    sampledata = {
+        "nmode.5h.py" : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/nmode.5h.py",
+        "com.top.2"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/com.top.2",
+        "rec.top.2"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/rec.top.2",
+        "lig.top"     : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/lig.top",
+        "rep1.troj"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/trajectories/rep1.traj"
+    }
+
+    try: 
+        for key, val in sampledata.iteritems():
+            print " * Downloading sample input data %s" % val
+            urllib.urlretrieve(val, key)
+    except Exception, ex:
+        print "ERROR - Couldn't download sample data: %s" % str(ex)
+
     ############################################################
     # The resource allocation
     cluster = bigjobasync.Resource(
@@ -78,7 +95,7 @@ def run_test_job(resource_name, username, workdir, allocation):
         cores       = 1,
         environment = kernelcfg["environment"],
         executable  = "/bin/bash",
-        arguments   = ["-l", "-c", "\"%s && %s -i ~/MMPBSASampleDATA/nmode.5h.py -cp ~/MMPBSASampleDATA/com.top.2 -rp ~/MMPBSASampleDATA/rec.top.2 -lp ~/MMPBSASampleDATA/lig.top -y ~/MMPBSASampleDATA/trajectories/rep10.traj \"" % \
+        arguments   = ["-l", "-c", "\"%s && %s -i nmode.5h.py -cp com.top.2 -rp rec.top.2 -lp lig.top -y rep1.traj \"" % \
             (kernelcfg["pre_execution"], kernelcfg["executable"])],
 
         output = [
@@ -92,18 +109,26 @@ def run_test_job(resource_name, username, workdir, allocation):
     )
     mmpbsa_test_task.register_callbacks(task_cb)
 
-    cluster.schedule_tasks([mmpbsa_test_task])
-    cluster.wait()
+    #cluster.schedule_tasks([mmpbsa_test_task])
+    #cluster.wait()
 
     if mmpbsa_test_task.state is bigjobasync.FAILED:
         print "\nERROR: Couldn't run test task."
+        return 1
     else:
         print "\nTest task results:"
         with open(output_file, 'r') as content_file:
             content = content_file.read()
             print content
+
         # remove output file
-        os.remove(output_file)
+        try:
+            os.remove(output_file)
+            for key, val in sampledata.iteritems():
+                os.remove("./%s" % key)
+        except Exception, ex:
+            pass # ignore cleanup errors
+        return 0
 
 
 # ----------------------------------------------------------------------------
