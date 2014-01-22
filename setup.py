@@ -122,7 +122,7 @@ setup_args = {
         'Operating System     :: Unix'
     ],
     'packages'         : ["bigjobasync"], 
-    'package_data'     : {'': ['*.sh', 'VERSION', ]},
+    'package_data'     : {'': ['*.sh']},
     #'test_suite'       : 'sinon.tests',
     'install_requires' : ['setuptools',
                           'BigJob',

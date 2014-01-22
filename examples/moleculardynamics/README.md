@@ -22,9 +22,9 @@ CONFIG = {
 
 ### 1.2 Test Mode
 
-The `freenrg` script provides a 'test mode' in which only a single task is submitted to the remote cluster. This tasks checks wether the environment is healthy / usable and gathers some information about AMBER / MMPBSA. 
+The `freenrg` script provides two 'test modes' (`--checkenv` and `--testjob`) in which only a single task is submitted to the remote cluster to check wether the environment is healthy and usable.  
 
-Before you start running large simulations on a resource, you should run test mode at least once to ensure that everything (?) is in place:
+Before you start running large simulations on a resource, you should run `--checkenv` test mode at least once to ensure that the environment is ok:
 
 ```
 $> python freenrg.py --checkenv
@@ -48,14 +48,16 @@ MMPBSA path:/opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/MMPBSA.py
 MMPBSA version:MMPBSA.py: Version 13.0
 ```
 
+Once `--checkenv` has passed, you can run `--testjob`. In this test mode, a single free energy calculation job is launched together with some [sample input data](http://google.com) that is downloaded and transferred on the fly.  
+
+
 ```
 $> python freenrg.py --testjob
 ```
 
-Output: 
+The output should look like this:
 
 ```
-(MDStack)oweidner@entropy:~/BigJobAsync-src/examples/moleculardynamics/freenrg$ python freenrg.py --testjob
  * Task MMPBSA-fe-test-task state changed from 'New' to 'TransferringInput'.
  * Task MMPBSA-fe-test-task state changed from 'TransferringInput' to 'WaitingForExecution'.
  * Resource '<_BigJobWorker(_BigJobWorker-9, started daemon)>' state changed from 'New' to 'Pending'.
