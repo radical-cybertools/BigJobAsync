@@ -41,7 +41,7 @@ class Resource(threading.Thread):
 
         if "core_increment" in resource:
             # round up to the nearest core increment
-            cores = math.ceil(cores/resource["core_increment"])
+            cores = math.ceil(float(cores)/resource["core_increment"]) * resource["core_increment"]
             logger.info("Rounding up allocation to nearest core increment: %s." % (cores))
 
         self._resource_obj                       = {}
