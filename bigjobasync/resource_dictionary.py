@@ -13,11 +13,12 @@ __license__   = "MIT"
 
 RESOURCES = {
     'XSEDE.STAMPEDE': {
-        'redis_host'    : 'gw68.quarry.iu.teragrid.org:6379',
-        'redis_pwd'     : 'ILikeBigJob_wITH-REdIS',
-        'jobmgr_url'    : 'slurm+ssh://stampede.tacc.utexas.edu',
-        'jobmgr_queue'  : 'normal',
-        'shared_fs_url' : 'sftp://stampede.tacc.utexas.edu/',
+        'redis_host'      : 'gw68.quarry.iu.teragrid.org:6379',
+        'redis_pwd'       : 'ILikeBigJob_wITH-REdIS',
+        'jobmgr_url'      : 'slurm+ssh://stampede.tacc.utexas.edu',
+        'jobmgr_queue'    : 'normal',
+        'core_increment'  : 16, # allocations need to be multiples of this
+        'shared_fs_url'   : 'sftp://stampede.tacc.utexas.edu/',
     },
     
     'XSEDE.LONESTAR': {

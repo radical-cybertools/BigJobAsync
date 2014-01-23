@@ -109,15 +109,23 @@ cpptraj found! Using /opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/cpptraj
 A sample workload file (workload.py) is provided in which multiple MMPBSA tasks are defined. A workload is passed to the freenrg.py tool via the --workload= flag. Change the workload in the file to your specific needs:
 
 ```
-WORKLOAD = {
-    'resource'      : 'XSEDE.STAMPEDE',
-    'username'      : 'tg802352',
-    'workdir'       : '/scratch/00988/tg802352/freenrg/',
-    'allocation'    : 'TG-MCB090174'
-}
+WORKLOAD = []
+
+for tj in range(1, 2):
+
+    task = {
+        "runtime" : 60, # minutes per task
+        "nmode"   : "/home1/00988/tg802352/MMPBSASampleDATA/nmode.5h.py",
+        "com"     : "/home1/00988/tg802352/MMPBSASampleDATA/com.top.2",
+        "rec"     : "/home1/00988/tg802352/MMPBSASampleDATA/rec.top.2",
+        "lig"     : "/home1/00988/tg802352/MMPBSASampleDATA/lig.top",
+        "traj"    : "/home1/00988/tg802352/MMPBSASampleDATA/trajectories/rep%s.traj" % tj,
+    }
+
+    WORKLOAD.append(task)
 ```
 
-Once you have defined your workload you can execute it. Due to the potentially long runtime of your workload, it is highly advisable to run the script within a terminal multiplexer, like [tmux](#). This allows you to _detach_ from your running script, log out from the lab machine and re-attach to it at a later point in time to check its progress.
+Once you have defined your workload you can execute it. Due to the potentially long runtime of your workload, it is highly advisable to run the script within a terminal multiplexer, like [tmux](http://robots.thoughtbot.com/a-tmux-crash-course). This allows you to _detach_ from your running script, log out from the lab machine and re-attach to it at a later point in time to check its progress.
 
 > TIP: To start a new tmux session, type
 > 
@@ -125,11 +133,11 @@ Once you have defined your workload you can execute it. Due to the potentially l
 >    
 > You can *detach* from a running tmux session by pressing `Ctrl-B D` and *re-attach* by launching tmux via `tmux attach`.
 
-Within your (new) `tmux` session, active your virtual environment and launch your workload
+In your (new) `tmux` session, active your virtual environment, update BigJobAsync (just in case) and launch your workload:
 
 ```
-ACTIVATE
-
+source $HOME/MDStack/bin/activate
+pip install --upgrade -e git://github.com/oleweidner/BigJobAsync.git@master#egg=bigjobasync
 python freenrg.py --config=config.py --workload=workload.py
 ```
  

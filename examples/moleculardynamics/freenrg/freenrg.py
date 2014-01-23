@@ -50,8 +50,95 @@ def task_cb(origin, old_state, new_state):
 # ----------------------------------------------------------------------------
 #
 def run_workload(config, workload):
+    """Runs the FE tasks defined in `workload`.
+    """
+    resource_name = config['resource']
+    username      = config['username']
+    workdir       = config['workdir']
+    allocation    = config['allocation']
+    numtasks      = len(workload)
 
-    print workload
+    ############################################################
+    # The resource allocation
+    cluster = bigjobasync.Resource(
+        name       = resource_name, 
+        resource   = bigjobasync.RESOURCES[resource_name],
+        username   = username,
+        runtime    = 60, 
+        cores      = 16, 
+        workdir    = workdir,
+        project_id = allocation
+    )
+    cluster.register_callbacks(resource_cb)
+    cluster.allocate(terminate_on_empty_queue=True)
+
+    ############################################################
+    # The workload
+    tasknum   = 0
+    all_tasks = []
+
+    for task in workload:
+
+        tasknum += 1
+
+        input_nmode = task["nmode"]
+        input_com   = task["com"]
+        input_rec   = task["rec"]
+        input_lig   = task["lig"]
+        input_traj  = task["traj"]
+
+        kernelcfg = KERNEL["MMPBSA"]["resources"][resource_name]
+        mmpbsa_task     = bigjobasync.Task(
+            name        = "MMPBSA-fe-task-%s" % tasknum,
+            cores       = 1,
+            environment = kernelcfg["environment"],
+            executable  = "/bin/bash",
+            arguments   = ["-l", "-c", "\"%s && %s -i %s -cp %s -rp %s -lp %s -y %s \"" % \
+                   (kernelcfg["pre_execution"], 
+                    kernelcfg["executable"], 
+                    os.path.basename(input_nmode),  
+                    os.path.basename(input_com),  
+                    os.path.basename(input_rec),  
+                    os.path.basename(input_lig),  
+                    os.path.basename(input_traj) 
+                    )],
+
+            input = [
+                { 
+                    "mode"        : bigjobasync.LINK, 
+                    "origin"      : bigjobasync.REMOTE, 
+                    "origin_path" : input_nmode,
+                },
+                {
+                    "mode"        : bigjobasync.LINK, 
+                    "origin"      : bigjobasync.REMOTE, 
+                    "origin_path" : input_com,
+                },
+                {
+                    "mode"        : bigjobasync.LINK, 
+                    "origin"      : bigjobasync.REMOTE, 
+                    "origin_path" : input_rec,
+                },
+                {
+                    "mode"        : bigjobasync.LINK, 
+                    "origin"      : bigjobasync.REMOTE, 
+                    "origin_path" : input_lig,
+                },
+                {
+                    "mode"        : bigjobasync.LINK, 
+                    "origin"      : bigjobasync.REMOTE, 
+                    "origin_path" : input_traj,
+                },
+            ]
+        )
+        mmpbsa_task.register_callbacks(task_cb)
+        all_tasks.append(mmpbsa_task) 
+
+    cluster.schedule_tasks(all_tasks)
+    cluster.wait()
+
+    print "DONE -- All trajectories have been processed."
+
     return 0
 
 # ----------------------------------------------------------------------------
@@ -88,7 +175,7 @@ def run_test_job(config):
         name       = resource_name, 
         resource   = bigjobasync.RESOURCES[resource_name],
         username   = username,
-        runtime    = 300, 
+        runtime    = 60, 
         cores      = 16, 
         workdir    = workdir,
         project_id = allocation
@@ -99,7 +186,6 @@ def run_test_job(config):
     ############################################################
     # The test task
     output_file = "./MMPBSA-test-task-%s" % str(uuid.uuid4())
-
 
     kernelcfg = KERNEL["MMPBSA"]["resources"][resource_name]
 

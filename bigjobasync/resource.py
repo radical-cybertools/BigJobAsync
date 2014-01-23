@@ -9,6 +9,7 @@ __copyright__ = "Copyright 2013-2014, The RADICAL Project at Rutgers"
 __license__   = "MIT"
 
 import time
+import math
 import pilot
 import saga
 import Queue
@@ -38,8 +39,10 @@ class Resource(threading.Thread):
         self.lock       = threading.Lock()
         self._terminate = threading.Event()
 
-        # Initialize the traceable interface
-        #Traceable.__init__(self)
+        if "core_increment" in resource:
+            # round up to the nearest core increment
+            cores = math.ceil(cores/resource["core_increment"])
+            logger.info("Rounding up allocation to nearest core increment: %s." % (cores))
 
         self._resource_obj                       = {}
         self._resource_obj['log']                = []
