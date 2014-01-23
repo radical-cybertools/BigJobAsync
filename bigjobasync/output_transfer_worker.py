@@ -73,6 +73,9 @@ class _OutputTransferWorker(multiprocessing.Process):
     def transfer_output_file(self, task):
 
         # Change the task state to 'TransferringInput'
+
+        prev_state = task.state
+
         task._set_state(constants.TRANSFERRING_OUTPUT)
 
         # Iterate over the tasks and try to submit them to BigJob after the 
@@ -97,6 +100,10 @@ class _OutputTransferWorker(multiprocessing.Process):
             origin_path      = directive['origin_path']
             destination      = directive['destination']
             destination_path = directive['destination_path']
+
+            if "trasfer_if_failed" in directive:
+                if directive["trasfer_if_failed"] is False and prev_state == constants.FAILED:
+                    continue
 
             try: 
                 output_file_url = "%s/%s" % (task_workdir_url, origin_path)
@@ -137,5 +144,10 @@ class _OutputTransferWorker(multiprocessing.Process):
 
         # Set state to 'Pending'. From here on, BigJob will
         # determine the state of this task.
-        task._set_state(constants.DONE)
-        self._tasks_done_q.put(task)
+
+        if prev_state == constants.FAILED:
+            task._set_state(constants.FAILED)
+            self._tasks_failed_q.put(task)
+        else:
+            task._set_state(constants.DONE)
+            self._tasks_done_q.put(task)

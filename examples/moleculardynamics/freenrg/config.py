@@ -8,3 +8,4 @@ CONFIG = {
     "workdir"       : "/scratch/00988/tg802352/freenrg/",
     "allocation"    : "TG-MCB090174"
 }
+

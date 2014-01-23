@@ -14,7 +14,6 @@ import urllib
 import optparse
 import bigjobasync 
 
-from config import CONFIG
 from kernel import KERNEL
 
 # ----------------------------------------------------------------------------
@@ -50,9 +49,21 @@ def task_cb(origin, old_state, new_state):
 
 # ----------------------------------------------------------------------------
 #
-def run_test_job(resource_name, username, workdir, allocation):
+def run_workload(config, workload):
+
+    print workload
+    return 0
+
+# ----------------------------------------------------------------------------
+#
+def run_test_job(config):
     """Runs a single FE test job.
     """
+
+    resource_name = config['resource']
+    username      = config['username']
+    workdir       = config['workdir']
+    allocation    = config['allocation']
 
     # Download the sample data from MDStack server
     sampledata = {
@@ -60,7 +71,7 @@ def run_test_job(resource_name, username, workdir, allocation):
         "com.top.2"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/com.top.2",
         "rec.top.2"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/rec.top.2",
         "lig.top"     : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/lig.top",
-        "rep1.troj"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/trajectories/rep1.traj"
+        "rep1.traj"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/trajectories/rep1.traj"
     }
 
     try: 
@@ -69,6 +80,7 @@ def run_test_job(resource_name, username, workdir, allocation):
             urllib.urlretrieve(val, key)
     except Exception, ex:
         print "ERROR - Couldn't download sample data: %s" % str(ex)
+        return 1
 
     ############################################################
     # The resource allocation
@@ -86,7 +98,8 @@ def run_test_job(resource_name, username, workdir, allocation):
 
     ############################################################
     # The test task
-    output_file = "/tmp/MMPBSA-test-task-%s" % str(uuid.uuid4())
+    output_file = "./MMPBSA-test-task-%s" % str(uuid.uuid4())
+
 
     kernelcfg = KERNEL["MMPBSA"]["resources"][resource_name]
 
@@ -98,45 +111,73 @@ def run_test_job(resource_name, username, workdir, allocation):
         arguments   = ["-l", "-c", "\"%s && %s -i nmode.5h.py -cp com.top.2 -rp rec.top.2 -lp lig.top -y rep1.traj \"" % \
             (kernelcfg["pre_execution"], kernelcfg["executable"])],
 
+        input = [
+            { 
+                "mode"        : bigjobasync.COPY,
+                "origin"      : bigjobasync.LOCAL,
+                "origin_path" : "/%s/nmode.5h.py" % os.getcwd(),
+            },
+            {
+                "mode"        : bigjobasync.COPY, 
+                "origin"      : bigjobasync.LOCAL, 
+                "origin_path" : "/%s/com.top.2" % os.getcwd(),
+            },
+            {
+                "mode"        : bigjobasync.COPY, 
+                "origin"      : bigjobasync.LOCAL, 
+                "origin_path" : "/%s/rec.top.2" % os.getcwd(),
+            },
+            {
+                "mode"        : bigjobasync.COPY, 
+                "origin"      : bigjobasync.LOCAL, 
+                "origin_path" : "/%s/lig.top" % os.getcwd(),
+            },
+            {
+                "mode"        : bigjobasync.COPY, 
+                "origin"      : bigjobasync.LOCAL, 
+                "origin_path" : "/%s/rep1.traj" % os.getcwd(),
+            },
+        ], 
+
         output = [
             {
-                "mode"             : bigjobasync.COPY, 
-                "origin_path"      : "STDOUT" ,      
-                "destination"      : bigjobasync.LOCAL,
-                "destination_path" : output_file
+                "mode"              : bigjobasync.COPY, 
+                "origin_path"       : "STDOUT" ,      
+                "destination"       : bigjobasync.LOCAL,
+                "destination_path"  : output_file,
+                "trasfer_if_failed" : True
             }
         ]
     )
     mmpbsa_test_task.register_callbacks(task_cb)
 
-    #cluster.schedule_tasks([mmpbsa_test_task])
-    #cluster.wait()
+    cluster.schedule_tasks([mmpbsa_test_task])
+    cluster.wait()
 
-    if mmpbsa_test_task.state is bigjobasync.FAILED:
-        print "\nERROR: Couldn't run test task."
-        return 1
-    else:
-        print "\nTest task results:"
+    try: 
         with open(output_file, 'r') as content_file:
             content = content_file.read()
             print content
+        os.remove(output_file)
 
-        # remove output file
-        try:
-            os.remove(output_file)
-            for key, val in sampledata.iteritems():
-                os.remove("./%s" % key)
-        except Exception, ex:
-            pass # ignore cleanup errors
-        return 0
+        for key, val in sampledata.iteritems():
+            os.remove("./%s" % key)
 
+    except Exception:
+        pass
+
+    return 0
 
 # ----------------------------------------------------------------------------
 #
-def run_sanity_check(resource_name, username, workdir, allocation):
+def run_sanity_check(config):
     """Runs a simple job that performs some sanity tests, determines 
     AMBER version, etc.
     """
+    resource_name = config['resource']
+    username      = config['username']
+    workdir       = config['workdir']
+    allocation    = config['allocation']
 
     ############################################################
     # The resource allocation
@@ -154,7 +195,7 @@ def run_sanity_check(resource_name, username, workdir, allocation):
 
     ############################################################
     # The test task
-    output_file = "/tmp/MMPBSA-test-task-%s" % str(uuid.uuid4())
+    output_file = "./MMPBSA-test-task-%s.OUT" % str(uuid.uuid4())
 
     kernelcfg = KERNEL["MMPBSA"]["resources"][resource_name]
 
@@ -168,10 +209,11 @@ def run_sanity_check(resource_name, username, workdir, allocation):
 
         output = [
             {
-                "mode"             : bigjobasync.COPY, 
-                "origin_path"      : "STDOUT" ,      
-                "destination"      : bigjobasync.LOCAL,
-                "destination_path" : output_file
+                "mode"              : bigjobasync.COPY, 
+                "origin_path"       : "STDOUT" ,      
+                "destination"       : bigjobasync.LOCAL,
+                "destination_path"  : output_file,
+                "trasfer_if_failed" : False
             }
         ]
     )
@@ -180,21 +222,22 @@ def run_sanity_check(resource_name, username, workdir, allocation):
     cluster.schedule_tasks([mmpbsa_check_task])
     cluster.wait()
 
-    if mmpbsa_test_task.state is bigjobasync.FAILED:
-        print "\nERROR: Couldn't run check task."
-    else:
-        print "\Check task results:"
+    try: 
         with open(output_file, 'r') as content_file:
             content = content_file.read()
             print content
-        # remove output file
         os.remove(output_file)
+
+    except Exception:
+        pass
+
+    return 0
 
 # ----------------------------------------------------------------------------
 #
 if __name__ == "__main__":
 
-    usage = "usage: %prog [--checkenv, --testjob]"
+    usage = "usage: %prog --config [--checkenv, --testjob, --workload]"
     parser = optparse.OptionParser(usage=usage)
 
     parser.add_option('--checkenv',
@@ -205,20 +248,47 @@ if __name__ == "__main__":
     parser.add_option('--testjob',
                       dest='testjob',
                       action="store_true",
-                      help='Launches a test job with runs single FE calculation.')
+                      help='Launches a test job with a single FE calculation.')
 
-    # parse the whole shebang
+    parser.add_option('-c', '--config',
+                      metavar='CONFIG',
+                      dest='config',
+                      help='The machine / resource configuration file. (REQUIRED)')
+
+
+    parser.add_option('-w', '--workload',
+                      metavar='WORKLOAD',
+                      dest='workload',
+                      help='Launches the FE tasks defined in the provided WORKLOAD file.')
+
+    # PARSE THE CMD LINE OPTIONS
     (options, args) = parser.parse_args()
 
+    if options.config is None:
+        parser.error("You must define a configuration (-c/--config). Try --help for help.")
+    
+    config = __import__(options.config.split(".")[0])
+    from config import CONFIG
+
     if options.checkenv is True:
-        run_sanity_check(CONFIG['resource'], CONFIG['username'], CONFIG['workdir'], CONFIG['allocation'])   
-        sys.exit(0)
+        # RUN THE CHECK ENVIRONMENT JOB
+        result = run_sanity_check(config=CONFIG)
+        sys.exit(result)
 
     elif options.testjob is True:
-        run_test_job(CONFIG['resource'], CONFIG['username'], CONFIG['workdir'], CONFIG['allocation'])   
-        sys.exit(0)
+        # RUN THE FE TEST JOB
+        result = run_test_job(config=CONFIG) 
+        sys.exit(result)
+
+    elif options.workload is not None:
+        # RUN A WORKLOAD
+        workload = __import__(options.workload.split(".")[0])
+        from workload import WORKLOAD 
+        result = run_workload(config=CONFIG, workload=WORKLOAD)
+        sys.exit(result)
 
     else:
-        print "not implemented yet"
-        sys.exit(0)
+        # ERROR - INVALID PARAMETERS
+        parser.error("You must run either --checkenv, --testjob or --workload. Try --help for help.")
+        sys.exit(1)
 

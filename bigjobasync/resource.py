@@ -25,7 +25,7 @@ from output_transfer_worker import _OutputTransferWorker
 
 # ----------------------------------------------------------------------------
 #
-class Resource(threading.Thread, Traceable):
+class Resource(threading.Thread):
 
     # ------------------------------------------------------------------------
     #
@@ -39,7 +39,7 @@ class Resource(threading.Thread, Traceable):
         self._terminate = threading.Event()
 
         # Initialize the traceable interface
-        Traceable.__init__(self)
+        #Traceable.__init__(self)
 
         self._resource_obj                       = {}
         self._resource_obj['log']                = []
@@ -68,8 +68,8 @@ class Resource(threading.Thread, Traceable):
                 raise Exception("Couldn't find BigJob. Please install first via 'pip install --upgrade bigjob'.")
 
         # make sure we have at least version0.9.16 of saga-python
-        if saga.version < "0.9.16":
-            raise Exception("Need saga-python >= 0.9.16. Found %s. Please update via 'pip install --upgrade saga-python'.")
+        if saga.version < "0.10":
+            raise Exception("Need saga-python >= 0.9.16. Found %s. Please update via 'pip install --upgrade saga-python'." % saga.version)
 
         # inject username into remote_workdir_url
         remote_workdir_url = saga.Url("%s/%s/" % (resource['shared_fs_url'], workdir))

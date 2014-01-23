@@ -133,7 +133,10 @@ class _BigJobWorker(multiprocessing.Process):
                 elif pt['task'].state in [constants.FAILED]:
                     # Task has failed, so there's not much we can do except for 
                     # removing it from the list of physical tasks
-                    self._tasks_failed_q.put(pt['task'])
+                    
+                    # we transfer task output even if the task has failed
+                    #self._tasks_failed_q.put(pt['task'])
+                    self._tasks_ready_to_transfer_output_q.put(pt['task'])
                     self._physical_tasks.remove(pt)
 
                     self._tasks_ready_to_exec_q.task_done()

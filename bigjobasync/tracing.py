@@ -15,7 +15,7 @@ class Traceable(object):
     def __init__(self):
         self.trace = []
 
-    def set(self, data)):
+    def set(self, data):
         self.trace.append(data)
 
 

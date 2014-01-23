@@ -9,7 +9,7 @@ This example shows how to run a set of free energy calculations using AMBER / [M
 ### 1.1 Configuration
 
 A simple configuration file (`config.py`)is provided in which the allocation and resource 
-parameters are set. Change any of the values to your specific needs: 
+parameters are set. Configuration files are passed to the `freenrg.py` tool via the `--config=` flag. Change any of the values in the file to your specific needs: 
 
 ```
 CONFIG = {
@@ -27,7 +27,7 @@ The `freenrg` script provides two 'test modes' (`--checkenv` and `--testjob`) in
 Before you start running large simulations on a resource, you should run `--checkenv` test mode at least once to ensure that the environment is ok:
 
 ```
-$> python freenrg.py --checkenv
+$> python freenrg.py --config=config.py --checkenv
 ``` 
 
 The output should look like this:
@@ -52,7 +52,7 @@ Once `--checkenv` has passed, you can run `--testjob`. In this test mode, a sing
 
 
 ```
-$> python freenrg.py --testjob
+$> python freenrg.py --config=config.py --testjob
 ```
 
 The output should look like this:
@@ -103,4 +103,34 @@ MMPBSA.py Finished! Thank you for using. Please cite us if you publish this work
 mmpbsa_py_energy found! Using /opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/mmpbsa_py_energy
 cpptraj found! Using /opt/apps/intel13/mvapich2_1_9/amber/12.0/bin/cpptraj
 ```
+
+### 1.3 Running a Free Energy Calculation Workload
+
+A sample workload file (workload.py) is provided in which multiple MMPBSA tasks are defined. A workload is passed to the freenrg.py tool via the --workload= flag. Change the workload in the file to your specific needs:
+
+```
+WORKLOAD = {
+    'resource'      : 'XSEDE.STAMPEDE',
+    'username'      : 'tg802352',
+    'workdir'       : '/scratch/00988/tg802352/freenrg/',
+    'allocation'    : 'TG-MCB090174'
+}
+```
+
+Once you have defined your workload you can execute it. Due to the potentially long runtime of your workload, it is highly advisable to run the script within a terminal multiplexer, like [tmux](#). This allows you to _detach_ from your running script, log out from the lab machine and re-attach to it at a later point in time to check its progress.
+
+> TIP: To start a new tmux session, type
+> 
+>     tmux
+>    
+> You can *detach* from a running tmux session by pressing `Ctrl-B D` and *re-attach* by launching tmux via `tmux attach`.
+
+Within your (new) `tmux` session, active your virtual environment and launch your workload
+
+```
+ACTIVATE
+
+python freenrg.py --config=config.py --workload=workload.py
+```
+ 
 
