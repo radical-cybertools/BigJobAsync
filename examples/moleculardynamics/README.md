@@ -142,5 +142,13 @@ pip install --upgrade -e git://github.com/oleweidner/BigJobAsync.git@master#egg=
 
 python freenrg.py --config=config.py --workload=workload.py
 ```
+
+Now you can detach from your tmux session or simply leave the terminal open. At some point you will see a message similar to this:
+
+```
+DONE -- All trajectories have been processed.
+```
+
+You will find the `FINAL_RESULTS_MMPBSA.dat` files for the individual tasks in the current directory. 
  
 

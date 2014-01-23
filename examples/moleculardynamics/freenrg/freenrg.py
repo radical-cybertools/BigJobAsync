@@ -134,6 +134,14 @@ def run_workload(config, workload):
                     "origin"      : bigjobasync.REMOTE, 
                     "origin_path" : input_traj,
                 },
+            ],
+            output = [
+                {
+                    "mode"             : bigjobasync.COPY, 
+                    "origin_path"      : "FINAL_RESULTS_MMPBSA.dat",     
+                    "destination"      : bigjobasync.LOCAL,
+                    "destination_path" : "./traj-%s-FINAL_RESULTS_MMPBSA.dat" % tasknum
+                }
             ]
         )
         mmpbsa_task.register_callbacks(task_cb)
