@@ -58,14 +58,19 @@ def run_workload(config, workload):
     allocation    = config['allocation']
     numtasks      = len(workload)
 
+    longest_runtime = 0
+    for task in workload:
+        if int(task['runtime']) > longest_runtime:
+            longest_runtime = int(task['runtime'])
+
     ############################################################
     # The resource allocation
     cluster = bigjobasync.Resource(
         name       = resource_name, 
         resource   = bigjobasync.RESOURCES[resource_name],
         username   = username,
-        runtime    = 60, 
-        cores      = 16, 
+        runtime    = longest_runtime, 
+        cores      = numtasks,
         workdir    = workdir,
         project_id = allocation
     )
