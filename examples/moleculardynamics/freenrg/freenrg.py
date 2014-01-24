@@ -167,11 +167,11 @@ def run_test_job(config):
 
     # Download the sample data from MDStack server
     sampledata = {
-        "nmode.5h.py" : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/nmode.5h.py",
-        "com.top.2"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/com.top.2",
-        "rec.top.2"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/rec.top.2",
-        "lig.top"     : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/lig.top",
-        "rep1.traj"   : "http://repex2.tacc.utexas.edu/mdstack/sampledata/MMBPSA/trajectories/rep1.traj"
+        "nmode.5h.py" : "http://repex2.tacc.utexas.edu/cybertools/sampledata/MMBPSA/nmode.5h.py",
+        "com.top.2"   : "http://repex2.tacc.utexas.edu/cybertools/sampledata/MMBPSA/com.top.2",
+        "rec.top.2"   : "http://repex2.tacc.utexas.edu/cybertools/sampledata/MMBPSA/rec.top.2",
+        "lig.top"     : "http://repex2.tacc.utexas.edu/cybertools/sampledata/MMBPSA/lig.top",
+        "rep1.traj"   : "http://repex2.tacc.utexas.edu/cybertools/sampledata/MMBPSA/trajectories/rep1.traj"
     }
 
     try: 
