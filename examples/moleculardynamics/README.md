@@ -138,7 +138,7 @@ In your (new) `tmux` session, active your virtual environment, update BigJobAsyn
 ```
 source $HOME/MDStack/bin/activate
 pip install bigjob
-pip install --upgrade -e git://github.com/oleweidner/BigJobAsync.git@master#egg=bigjobasync
+pip install --upgrade -e git://github.com/radical-cybertools/BigJobAsync.git@master#egg=bigjobasync
 
 python freenrg.py --config=config.py --workload=workload.py
 ```

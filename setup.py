@@ -102,7 +102,7 @@ setup_args = {
     'author_email'     : 'ole.weidner@rutgers.edu',
     'maintainer'       : "Ole Weidner", 
     'maintainer_email' : 'ole.weidner@rutgers.edu',
-    'url'              : 'https://github.com/oleweidner/BigJobAsync',
+    'url'              : 'https://github.com/radical-cybertools/BigJobAsync',
     'license'          : 'MIT',
     'keywords'         : "radical pilot job async bulk",
     'classifiers'      :  [
