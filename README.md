@@ -23,7 +23,6 @@ source $HOME/MDStack/bin/activate
 ```
 wget --no-check-certificate https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.tar.gz
 tar xzf virtualenv-1.9.tar.gz
-
 python virtualenv-1.9/virtualenv.py $HOME/MDStack
 source $HOME/MDStack/bin/activate
 ```
