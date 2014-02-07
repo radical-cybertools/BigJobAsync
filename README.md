@@ -12,13 +12,6 @@ the background.
 
 ### 1. Create a Python Virtualenv
 
-The lab machines don't seem to come with virtualenv preinstalled, so we have to download and unpack it first:
-
-```
-wget --no-check-certificate https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.tar.gz
-tar xzf virtualenv-1.9.tar.gz
-```
-
 Now we can use it to create a new `MDStack` virtualenv (use a different name if you want):
 
 ```
@@ -26,7 +19,11 @@ python virtualenv-1.9/virtualenv.py $HOME/MDStack
 source $HOME/MDStack/bin/activate
 ```
 
-> **NOTE:** Every time you log in to the lab machine, run `source $HOME/MDStack/bin/activate` to activate your virtualenv.
+> **NOTE:** If you don't have virtualenv installed, you can download it here:
+```
+wget --no-check-certificate https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.tar.gz
+tar xzf virtualenv-1.9.tar.gz
+```
 
 ### 2. Install BigJobAsync
 
