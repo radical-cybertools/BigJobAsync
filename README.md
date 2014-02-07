@@ -35,21 +35,15 @@ Now that we have a local virtualenv, we can install any Python packages without 
 pip install --upgrade -e git://github.com/radical-cybertools/BigJobAsync.git@master#egg=bigjobasync
 ```
 
-Next, we need to install the latest development version of saga-python as it fixes a few issues that I encountered with the ancient Ubuntu 10.x installation on the UCL lab machines:
-
-```
-pip install --upgrade -e git://github.com/saga-project/saga-python.git@devel#egg=saga-python
-```
-
 Once the installer has finished, make sure everything is in place (version numbers might diverge):
 
 ```
 python -c "import saga; print saga.version"
-0.9.15-13-g32884cd
+0.10
 python -c "import bigjob; print bigjob.version"
-0.53
+0.64.5
 python -c "import bigjobasync; print bigjobasync.version"
-0.2
+0.3
 ```
 
 ### 3. Set Up Access Credentials for Stampede
