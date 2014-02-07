@@ -15,14 +15,17 @@ the background.
 Now we can use it to create a new `MDStack` virtualenv (use a different name if you want):
 
 ```
-python virtualenv-1.9/virtualenv.py $HOME/MDStack
+virtualenv $HOME/MDStack
 source $HOME/MDStack/bin/activate
 ```
 
-> **NOTE:** If you don't have virtualenv installed, you can download it here:
+> **NOTE:** If you don't have virtualenv installed, you can run it like this:
 ```
 wget --no-check-certificate https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.tar.gz
 tar xzf virtualenv-1.9.tar.gz
+
+python virtualenv-1.9/virtualenv.py $HOME/MDStack
+source $HOME/MDStack/bin/activate
 ```
 
 ### 2. Install BigJobAsync
